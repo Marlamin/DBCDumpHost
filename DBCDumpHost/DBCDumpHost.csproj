@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -9,10 +9,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DB2FileReaderLib.NET" Version="1.0.0" />
     <PackageReference Include="DBDefsLib" Version="1.0.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DB2FileReaderLib.NET\DB2FileReaderLib.NET\DB2FileReaderLib.NET.csproj" />
   </ItemGroup>
 
   <ItemGroup>
