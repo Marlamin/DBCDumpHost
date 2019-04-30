@@ -51,7 +51,7 @@ namespace DBCDumpHost
 
             DBReader reader = new DBReader(filename);
 
-            var rawType = DefinitionManager.CompileDefinition(name, build, reader.LayoutHash);
+            var rawType = DefinitionManager.CompileDefinition(filename, build, reader.LayoutHash);
             var generic = typeof(DBReader).GetMethod("GetRecords").MakeGenericMethod(rawType);
             var instance = (IDictionary)generic.Invoke(reader, null);
 
