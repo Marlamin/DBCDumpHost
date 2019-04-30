@@ -49,9 +49,11 @@ namespace DBCDumpHost
                 }
             }
 
-            var rawType = DefinitionManager.CompileDefinition(filename, build);
-            var type = typeof(Storage<>).MakeGenericType(rawType);
-            var instance = (IDictionary)Activator.CreateInstance(type, filename);
+            DBReader reader = new DBReader(filename);
+
+            var rawType = DefinitionManager.CompileDefinition(name, build, reader.LayoutHash);
+            var generic = typeof(DBReader).GetMethod("GetRecords").MakeGenericMethod(rawType);
+            var instance = (IDictionary)generic.Invoke(reader, null);
 
             if (fromCache)
             {

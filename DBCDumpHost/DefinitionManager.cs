@@ -49,7 +49,7 @@ namespace DBCDumpHost
             Logger.WriteLine("Loaded " + definitionLookup.Count + " definitions!");
         }
 
-        public static Type CompileDefinition(string filename, string build, bool force = false)
+        public static Type CompileDefinition(string filename, string build, uint layoutHash, bool force = false)
         {
             var cleanDBName = Path.GetFileNameWithoutExtension(filename).ToLower();
 
@@ -66,53 +66,11 @@ namespace DBCDumpHost
                 throw new KeyNotFoundException("Definition for " + cleanDBName);
             }
 
-            DB2Reader reader;
-
-            using (var stream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (var bin = new BinaryReader(stream))
-            {
-                var identifier = new string(bin.ReadChars(4));
-                stream.Position = 0;
-                switch (identifier)
-                {
-                    case "WDC3":
-                        reader = new WDC3Reader(stream);
-                        break;
-                    case "WDC2":
-                    case "1SLC":
-                        reader = new WDC2Reader(stream);
-                        break;
-                    case "WDC1":
-                        reader = new WDC1Reader(stream);
-                        break;
-                    case "WDB6":
-                        reader = new WDB6Reader(stream);
-                        break;
-                    case "WDB5":
-                        reader = new WDB5Reader(stream);
-                        break;
-                    case "WDB4":
-                        reader = new WDB4Reader(stream);
-                        break;
-                    case "WDB3":
-                        reader = new WDB3Reader(stream);
-                        break;
-                    case "WDB2":
-                        reader = new WDB2Reader(stream);
-                        break;
-                    case "WDBC":
-                        reader = new WDBCReader(stream);
-                        break;
-                    default:
-                        throw new Exception("DBC type " + identifier + " is not supported!");
-                }
-            }
-
             var defs = definitionLookup[cleanDBName];
 
             Structs.VersionDefinitions? versionToUse;
 
-            if (!DBDefsLib.Utils.GetVersionDefinitionByLayoutHash(defs, reader.LayoutHash.ToString("X8"), out versionToUse))
+            if (!DBDefsLib.Utils.GetVersionDefinitionByLayoutHash(defs, layoutHash.ToString("X8"), out versionToUse))
             {
                 if (!string.IsNullOrWhiteSpace(build))
                 {
@@ -126,7 +84,7 @@ namespace DBCDumpHost
                     throw new Exception("No valid definition found for this layouthash and was not able to search by build!");
                 }
             }
-            
+
             var tb = mb.DefineType(Path.GetFileNameWithoutExtension(filename) + Path.GetRandomFileName().Replace(".", "") + "Struct", TypeAttributes.Public);
 
             foreach (var field in versionToUse.Value.definitions)
@@ -138,6 +96,14 @@ namespace DBCDumpHost
                     var constructorInfo = typeof(IndexAttribute).GetConstructor(constructorParameters);
                     var displayNameAttributeBuilder = new CustomAttributeBuilder(constructorInfo, new object[] { });
                     fbNumber.SetCustomAttribute(displayNameAttributeBuilder);
+                }
+
+                if (field.arrLength > 1)
+                {
+                    var constructorParameters = new Type[] { typeof(int) };
+                    var constructorInfo = typeof(CardinalityAttribute).GetConstructor(constructorParameters);
+                    var cardinalityAttributeBuilder = new CustomAttributeBuilder(constructorInfo, new object[] { field.arrLength });
+                    fbNumber.SetCustomAttribute(cardinalityAttributeBuilder);
                 }
             }
 
