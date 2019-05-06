@@ -31,18 +31,17 @@ namespace DBCDumpHost.Controllers
         public DataTablesResult Get(string name, string build, int draw, int start, int length)
         {
             var searching = false;
+            var searchValue = Request.Query["search[value]"];
 
-            if (string.IsNullOrWhiteSpace(Request.Query["search[value]"]))
+            if (string.IsNullOrWhiteSpace(searchValue))
             {
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw);
             }
             else
             {
                 searching = true;
-                Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with filter " + Request.Query["search[value]"]);
+                Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with filter " + searchValue);
             }
-
-            var searchValue = Request.Query["search[value]"];
 
             var result = new DataTablesResult();
 

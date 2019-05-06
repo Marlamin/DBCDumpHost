@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBCDumpHost", "DBCDumpHost\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DB2FileReaderLib.NET", "DB2FileReaderLib.NET\DB2FileReaderLib.NET\DB2FileReaderLib.NET.csproj", "{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBDiffer", "DBDiffer\DBDiffer\DBDiffer.csproj", "{F7FE9821-98B1-4B28-8588-FEA5257CFC75}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
