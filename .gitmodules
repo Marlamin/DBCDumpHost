@@ -1,3 +1,6 @@
 [submodule "DB2FileReaderLib.NET"]
 	path = DB2FileReaderLib.NET
 	url = https://github.com/barncastle/DB2FileReaderLib.NET
+[submodule "DBDiffer"]
+	path = DBDiffer
+	url = https://github.com/barncastle/DBDiffer
