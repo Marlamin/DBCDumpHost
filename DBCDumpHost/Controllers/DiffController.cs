@@ -22,7 +22,7 @@ namespace DBCDumpHost.Controllers
             var dbc2 = DBCManager.LoadDBC(name, build2);
 
             var comparer = new DBComparer(dbc1, dbc2);
-            var diff = comparer.Diff();
+            var diff = comparer.Diff(DiffType.WoWTools);
 
             return diff.ToJSONString();
         }
