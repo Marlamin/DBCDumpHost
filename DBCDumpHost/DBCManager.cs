@@ -34,18 +34,14 @@ namespace DBCDumpHost
                      return cachedStore;
             }
 
-            var filename = Path.Combine(SettingManager.dbcDir, build, "dbfilesclient", name + ".db2");
+            // Find file
+            var filename = "";
 
-            if (!File.Exists(filename))
+            foreach(var file in Directory.GetFiles(Path.Combine(SettingManager.dbcDir, build), "*.*", SearchOption.AllDirectories))
             {
-                filename = Path.Combine(SettingManager.dbcDir, build, "dbfilesclient", name + ".dbc");
-                if (!File.Exists(filename))
+                if(Path.GetFileNameWithoutExtension(file).ToLower() == name)
                 {
-                    filename = Path.Combine(SettingManager.dbcDir, build, name + ".dbc");
-                    if (!File.Exists(filename))
-                    {
-                        throw new FileNotFoundException("DBC not found on disk: " + filename);
-                    }
+                    filename = file;
                 }
             }
 
