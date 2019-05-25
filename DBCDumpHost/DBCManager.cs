@@ -1,16 +1,50 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using DB2FileReaderLib.NET;
+using DBCDumpHost.Utils;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DBCDumpHost
 {
     public class DBCManager
     {
-        private static Dictionary<(string, string), IDictionary> _dbcCache = new Dictionary<(string, string), IDictionary>();
+        private static MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 30 });
+        private static ConcurrentDictionary<(string, string), SemaphoreSlim> Locks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
 
-        public static IDictionary LoadDBC(string name, string build, bool fromCache = false)
+        public static IDictionary GetOrLoad(string name, string build)
+        {
+            IDictionary cachedDBC;
+
+            if (!Cache.TryGetValue((name, build), out cachedDBC))
+            {
+                SemaphoreSlim mylock = Locks.GetOrAdd((name, build), k => new SemaphoreSlim(1, 1));
+
+                mylock.Wait();
+
+                try
+                {
+                    if (!Cache.TryGetValue((name, build), out cachedDBC))
+                    {
+                        // Key not in cache, load DBC
+                        Logger.WriteLine("DBC " + name + " for build " + build + " is not cached, loading! (Cache currently at " + Cache.Count + " entries!)");
+                        cachedDBC = LoadDBC(name, build);
+                        Cache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+                    }
+                }
+                finally
+                {
+                    mylock.Release();
+                }
+            }
+
+            return cachedDBC;
+        }
+
+        private static IDictionary LoadDBC(string name, string build)
         {
             if (name.Contains("."))
             {
@@ -20,18 +54,6 @@ namespace DBCDumpHost
             if (string.IsNullOrEmpty(build))
             {
                 throw new Exception("No build given!");
-            }
-
-            // TODO: Given the state of your shit keep it to false so you don't keep fucking your RAM sideways
-            // This is a thing to consider when your memory issues are solved, with a timeout that releases it
-            // (meaning concurrency, slim mutexes are better for that type of stuff than ConcurrentDictionary)
-            // My assumption is that you end up calling this everywhere and if you load your entire DBC
-            // for every page browsed, thats a big oops in response time.
-            // -- Warpten.
-            if (fromCache)
-            {
-                 if (_dbcCache.TryGetValue((name, build), out var cachedStore))
-                     return cachedStore;
             }
 
             // Find file
@@ -50,11 +72,6 @@ namespace DBCDumpHost
             var rawType = DefinitionManager.CompileDefinition(filename, build, reader.LayoutHash);
             var generic = typeof(DBReader).GetMethod("GetRecords").MakeGenericMethod(rawType);
             var instance = (IDictionary)generic.Invoke(reader, null);
-
-            if (fromCache)
-            {
-                _dbcCache[(name, build)] = instance;
-            }
 
             return instance;
         }

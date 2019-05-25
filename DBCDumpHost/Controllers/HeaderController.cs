@@ -32,7 +32,7 @@ namespace DBCDumpHost.Controllers
             var result = new HeaderResult();
             try
             {
-                var storage = DBCManager.LoadDBC(name, build);
+                var storage = DBCManager.GetOrLoad(name, build);
 
                 if (!DefinitionManager.definitionLookup.ContainsKey(name))
                 {

@@ -28,7 +28,7 @@ namespace DBCDumpHost.Controllers
         {
             Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + "/" + bc + ") value " + val);
 
-            var storage = DBCManager.LoadDBC(name, build);
+            var storage = DBCManager.GetOrLoad(name, build);
 
             if (storage.Values.Count == 0)
             {

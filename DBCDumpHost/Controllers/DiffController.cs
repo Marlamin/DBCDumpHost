@@ -18,8 +18,8 @@ namespace DBCDumpHost.Controllers
 
             Logger.WriteLine("Serving diff for " + name + " between " + build1 + " and " + build2);
 
-            var dbc1 = DBCManager.LoadDBC(name, build1);
-            var dbc2 = DBCManager.LoadDBC(name, build2);
+            var dbc1 = DBCManager.GetOrLoad(name, build1);
+            var dbc2 = DBCManager.GetOrLoad(name, build2);
 
             var comparer = new DBComparer(dbc1, dbc2);
             var diff = comparer.Diff(DiffType.WoWTools);

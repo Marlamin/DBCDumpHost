@@ -22,11 +22,11 @@ namespace DBCDumpHost.Controllers
         {
             Logger.WriteLine("Serving texture lookup for filedataid " + filedataid + " build " + build);
 
-            var modelFileData = DBCManager.LoadDBC("modelfiledata", build, true);
-            var itemDisplayInfo = DBCManager.LoadDBC("itemdisplayinfo", build, true);
-            var textureFileData = DBCManager.LoadDBC("texturefiledata", build, true);
-            var creatureModelData = DBCManager.LoadDBC("creaturemodeldata", build, true);
-            var creatureDisplayInfo = DBCManager.LoadDBC("creaturedisplayinfo", build, true);
+            var modelFileData = DBCManager.GetOrLoad("modelfiledata", build);
+            var itemDisplayInfo = DBCManager.GetOrLoad("itemdisplayinfo", build);
+            var textureFileData = DBCManager.GetOrLoad("texturefiledata", build);
+            var creatureModelData = DBCManager.GetOrLoad("creaturemodeldata", build);
+            var creatureDisplayInfo = DBCManager.GetOrLoad("creaturedisplayinfo", build);
 
             var returnList = new Dictionary<uint, List<uint>>();
 

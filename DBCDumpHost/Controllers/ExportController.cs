@@ -18,7 +18,7 @@ namespace DBCDumpHost.Controllers
             Logger.WriteLine("Exporting DBC " + name + " for build " + build);
             try
             {
-                var storage = DBCManager.LoadDBC(name, build);
+                var storage = DBCManager.GetOrLoad(name, build);
                 if (storage.Values.Count == 0)
                 {
                     throw new Exception("No rows found!");

@@ -49,7 +49,7 @@ namespace DBCDumpHost.Controllers
 
             try
             {
-                var storage = DBCManager.LoadDBC(name, build);
+                var storage = DBCManager.GetOrLoad(name, build);
                 result.recordsTotal = storage.Values.Count;
 
                 var fields = DefinitionManager.definitionCache[(name, build)].GetFields();
