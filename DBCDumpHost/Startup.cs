@@ -22,9 +22,9 @@ namespace DBCDumpHost
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddSingleton<IDBDProvider>(x => new DBDProvider());
-            services.AddSingleton<IDBCProvider>(x => new DBCProvider());
-            services.AddSingleton<IDBCManager>(x => new DBCManager(x.GetService<IDBDProvider>(), x.GetService<IDBCProvider>()));
+            services.AddSingleton<IDBDProvider, DBDProvider>();
+            services.AddSingleton<IDBCProvider, DBCProvider>();
+            services.AddSingleton<IDBCManager, DBCManager>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
