@@ -16,11 +16,19 @@ namespace DBCDumpHost.Services
                 throw new Exception("No build given!");
 
             // Find file
-            var files = Directory.EnumerateFiles(Path.Combine(SettingManager.dbcDir, build), $"{tableName}.db*", SearchOption.AllDirectories);
-            if (files.Any())
-                return files.First();
+            string fileName = Path.Combine(SettingManager.dbcDir, build, $"{tableName}.db2");
 
-            throw new FileNotFoundException($"Unable to find {tableName}");
+            // if the db2 variant doesn't exist try dbc
+            if (!File.Exists(fileName))
+            {
+                fileName = Path.ChangeExtension(fileName, ".dbc");
+
+                // if the dbc variant doesn't exist throw
+                if (!File.Exists(fileName))
+                    throw new FileNotFoundException($"Unable to find {tableName}");
+            }
+
+            return fileName;
         }
 
         public Stream StreamForTableName(string tableName)
