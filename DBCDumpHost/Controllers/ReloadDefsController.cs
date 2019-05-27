@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DBCD.Providers;
+using DBCDumpHost.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DBCDumpHost.Controllers
 {
@@ -6,12 +8,20 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class ReloadDefsController : ControllerBase
     {
+        private readonly DBDProvider dbdProvider;
+
+        public ReloadDefsController(IDBDProvider dbdProvider)
+        {
+            this.dbdProvider = dbdProvider as DBDProvider;
+        }
+
+
         // GET: api/ReloadDefs
         [HttpGet]
         public string Get()
         {
-            DefinitionManager.LoadDefinitions();
-            return "Reloaded " + DefinitionManager.definitionLookup.Count + " definitions!";
+            int count = dbdProvider.LoadDefinitions();
+            return "Reloaded " + count + " definitions!";
         }
     }
 }

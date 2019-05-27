@@ -1,7 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DBCD;
+using DBCD.Providers;
+using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DBCDumpHost.Controllers
 {
@@ -15,6 +19,16 @@ namespace DBCDumpHost.Controllers
             public Dictionary<string, string> fks;
             public string error;
         }
+
+        private readonly DBCManager dbcManager;
+        private readonly DBDProvider dbdProvider;
+
+        public HeaderController(IDBCManager dbcManager, IDBDProvider dbdProvider)
+        {
+            this.dbcManager = dbcManager as DBCManager;
+            this.dbdProvider = dbdProvider as DBDProvider;
+        }
+
 
         // GET: api/DBC
         [HttpGet]
@@ -32,72 +46,65 @@ namespace DBCDumpHost.Controllers
             var result = new HeaderResult();
             try
             {
-                var storage = DBCManager.GetOrLoad(name, build);
+                var storage = dbcManager.GetOrLoad(name, build);
 
-                if (!DefinitionManager.definitionLookup.ContainsKey(name))
+                if (!dbdProvider.TryGetDefinition(name, out var definition))
                 {
                     throw new KeyNotFoundException("Definition for " + name);
                 }
 
-                var definition = DefinitionManager.definitionLookup[name];
-
-                var fields = DefinitionManager.definitionCache[(name, build)].GetFields();
-
                 result.headers = new List<string>();
                 result.fks = new Dictionary<string, string>();
 
-                if (storage.Values.Count == 0)
+                if (!storage.Values.Any())
                 {
-                    for (var j = 0; j < fields.Length; ++j)
+                    for (var j = 0; j < storage.AvailableColumns.Length; ++j)
                     {
-                        var field = fields[j];
-                        result.headers.Add(field.Name);
+                        var fieldName = storage.AvailableColumns[j];
+                        result.headers.Add(fieldName);
 
-                        foreach (var columnDef in definition.columnDefinitions)
+                        if (definition.columnDefinitions.TryGetValue(fieldName, out var columnDef))
                         {
-                            if (columnDef.Key == field.Name && columnDef.Value.foreignTable != null)
+                            if (columnDef.foreignTable != null)
                             {
-                                result.fks.Add(field.Name, columnDef.Value.foreignTable + "::" + columnDef.Value.foreignColumn);
+                                result.fks.Add(fieldName, columnDef.foreignTable + "::" + columnDef.foreignColumn);
                             }
                         }
                     }
                 }
                 else
                 {
-                    foreach (var item in storage.Values)
+                    foreach (DBCDRow item in storage.Values)
                     {
-                        for (var j = 0; j < fields.Length; ++j)
+                        for (var j = 0; j < storage.AvailableColumns.Length; ++j)
                         {
-                            var field = fields[j];
+                            string fieldName = storage.AvailableColumns[j];
+                            var field = item[fieldName];
 
-                            if (field.FieldType.IsArray)
+                            if (field is Array a)
                             {
-                                var a = (Array)field.GetValue(item);
                                 for (var i = 0; i < a.Length; i++)
                                 {
-                                    var isEndOfArray = a.Length - 1 == i;
+                                    result.headers.Add($"{fieldName}[{i}]");
 
-                                    result.headers.Add($"{field.Name}[{i}]");
-
-                                    foreach (var columnDef in definition.columnDefinitions)
+                                    if (definition.columnDefinitions.TryGetValue(fieldName, out var columnDef))
                                     {
-                                        if (columnDef.Key == field.Name && columnDef.Value.foreignTable != null)
+                                        if (columnDef.foreignTable != null)
                                         {
-                                            result.fks.Add($"{field.Name}[{i}]", columnDef.Value.foreignTable + "::" + columnDef.Value.foreignColumn);
+                                            result.fks.Add($"{fieldName}[{i}]", columnDef.foreignTable + "::" + columnDef.foreignColumn);
                                         }
                                     }
                                 }
                             }
-
                             else
                             {
-                                result.headers.Add(field.Name);
+                                result.headers.Add(fieldName);
 
-                                foreach (var columnDef in definition.columnDefinitions)
+                                if (definition.columnDefinitions.TryGetValue(fieldName, out var columnDef))
                                 {
-                                    if (columnDef.Key == field.Name && columnDef.Value.foreignTable != null)
+                                    if (columnDef.foreignTable != null)
                                     {
-                                        result.fks.Add(field.Name, columnDef.Value.foreignTable + "::" + columnDef.Value.foreignColumn);
+                                        result.fks.Add(fieldName, columnDef.foreignTable + "::" + columnDef.foreignColumn);
                                     }
                                 }
                             }
