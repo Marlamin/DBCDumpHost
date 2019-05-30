@@ -12,7 +12,7 @@ namespace DBCDumpHost
 {
     public class DBCManager
     {
-        private static MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 30 });
+        private static MemoryCache Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100 });
         private static ConcurrentDictionary<(string, string), SemaphoreSlim> Locks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
 
         public static IDictionary GetOrLoad(string name, string build)
