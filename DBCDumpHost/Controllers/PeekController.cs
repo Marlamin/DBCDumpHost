@@ -24,9 +24,9 @@ namespace DBCDumpHost.Controllers
 
         // GET: peek/name
         [HttpGet("{name}")]
-        public PeekResult Get(string name, string build, string bc, string col, int val)
+        public PeekResult Get(string name, string build, string col, int val)
         {
-            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + "/" + bc + ") value " + val);
+            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ") value " + val);
 
             var storage = DBCManager.GetOrLoad(name, build);
 
