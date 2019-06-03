@@ -34,7 +34,7 @@ namespace DBCDumpHost.Services
             return definitionLookup.Count;
         }
 
-        public Stream StreamForTableName(string tableName)
+        public Stream StreamForTableName(string tableName, string build = null)
         {
             tableName = Path.GetFileNameWithoutExtension(tableName);
 

@@ -59,9 +59,7 @@ namespace DBCDumpHost.Services
         private IDBCDStorage LoadDBC(string name, string build = null)
         {
             DBCD.DBCD storage = new DBCD.DBCD(dbcProvider, dbdProvider);
-
-            string filename = dbcProvider.GetDBCFile(name, build);
-            return storage.Load(filename, build);
+            return storage.Load(name, build);
         }
     }
 }

@@ -7,7 +7,13 @@ namespace DBCDumpHost.Services
 {
     public class DBCProvider : IDBCProvider
     {
-        public string GetDBCFile(string tableName, string build)
+        public Stream StreamForTableName(string tableName, string build)
+        {
+            string filename = GetDBCFile(tableName, build);
+            return new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        }
+
+        private string GetDBCFile(string tableName, string build)
         {
             if (tableName.Contains("."))
                 throw new Exception("Invalid DBC name!");
@@ -29,11 +35,6 @@ namespace DBCDumpHost.Services
             }
 
             return fileName;
-        }
-
-        public Stream StreamForTableName(string tableName)
-        {
-            return new FileStream(tableName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
     }
 }
