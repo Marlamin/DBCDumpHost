@@ -25,7 +25,7 @@ namespace DBCDumpHost.Services
             this.dbdProvider = dbdProvider as DBDProvider;
             this.dbcProvider = dbcProvider as DBCProvider;
 
-            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 30 });
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100 });
             Locks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
         }
 
