@@ -63,6 +63,12 @@ namespace DBCDumpHost.Controllers
             try
             {
                 var storage = dbcManager.GetOrLoad(name, build);
+
+                if(storage == null)
+                {
+                    throw new Exception("Definitions for this DB/version combo not found in definition cache!");
+                }
+
                 result.recordsTotal = storage.Values.Count();
 
                 result.data = new List<List<string>>();
