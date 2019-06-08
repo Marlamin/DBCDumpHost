@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.438
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBCDumpHost", "DBCDumpHost\DBCDumpHost.csproj", "{81E3CC2D-6004-4546-ABF6-E2273C2DA4CD}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBCD", "DBCD\DBCD\DBCD.csproj", "{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBFileReaderLib", "DBCD\DBFileReaderLib\DBFileReaderLib.csproj", "{09587743-1E93-4A4E-B46B-E445A7EB43BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBCDTester", "DBCDTester\DBCDTester.csproj", "{EECA2B45-F5ED-42E6-8827-6471427AD04E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
