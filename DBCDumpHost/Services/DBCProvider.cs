@@ -1,7 +1,6 @@
 ﻿using DBCD.Providers;
 using System;
 using System.IO;
-using System.Linq;
 
 namespace DBCDumpHost.Services
 {
@@ -22,7 +21,7 @@ namespace DBCDumpHost.Services
                 throw new Exception("No build given!");
 
             // Find file
-            string fileName = Path.Combine(SettingManager.dbcDir, build, $"{tableName}.db2");
+            string fileName = Path.Combine(SettingManager.dbcDir, build, "dbfilesclient", $"{tableName}.db2");
 
             // if the db2 variant doesn't exist try dbc
             if (!File.Exists(fileName))
