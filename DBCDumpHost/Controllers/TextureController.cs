@@ -39,7 +39,7 @@ namespace DBCDumpHost.Controllers
 
             var returnList = new Dictionary<uint, List<uint>>();
 
-            if (modelFileData.Contains(filedataid))
+            if (modelFileData.ContainsKey(filedataid))
             {
                 dynamic mfdEntry = modelFileData[filedataid];
 
