@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.202
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.438
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBCDumpHost", "DBCDumpHost\DBCDumpHost.csproj", "{81E3CC2D-6004-4546-ABF6-E2273C2DA4CD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DB2FileReaderLib.NET", "DB2FileReaderLib.NET\DB2FileReaderLib.NET\DB2FileReaderLib.NET.csproj", "{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBDiffer", "DBDiffer\DBDiffer\DBDiffer.csproj", "{F7FE9821-98B1-4B28-8588-FEA5257CFC75}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBCD", "DBCD\DBCD\DBCD.csproj", "{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBFileReaderLib", "DBCD\DBFileReaderLib\DBFileReaderLib.csproj", "{09587743-1E93-4A4E-B46B-E445A7EB43BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +21,18 @@ Global
 		{81E3CC2D-6004-4546-ABF6-E2273C2DA4CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81E3CC2D-6004-4546-ABF6-E2273C2DA4CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81E3CC2D-6004-4546-ABF6-E2273C2DA4CD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CBA05B22-F597-452F-BD45-6A98BCBE1AE7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7FE9821-98B1-4B28-8588-FEA5257CFC75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80F523B6-1E0E-414D-BF7E-4C89AECF1F20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09587743-1E93-4A4E-B46B-E445A7EB43BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

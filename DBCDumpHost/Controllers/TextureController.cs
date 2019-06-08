@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace DBCDumpHost.Controllers
 {
@@ -9,6 +10,14 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class TextureController : ControllerBase
     {
+        private readonly DBCManager dbcManager;
+
+        public TextureController(IDBCManager dbcManager)
+        {
+            this.dbcManager = dbcManager as DBCManager;
+        }
+
+
         // GET: data/
         [HttpGet]
         public string Get()
@@ -22,11 +31,11 @@ namespace DBCDumpHost.Controllers
         {
             Logger.WriteLine("Serving texture lookup for filedataid " + filedataid + " build " + build);
 
-            var modelFileData = DBCManager.GetOrLoad("modelfiledata", build);
-            var itemDisplayInfo = DBCManager.GetOrLoad("itemdisplayinfo", build);
-            var textureFileData = DBCManager.GetOrLoad("texturefiledata", build);
-            var creatureModelData = DBCManager.GetOrLoad("creaturemodeldata", build);
-            var creatureDisplayInfo = DBCManager.GetOrLoad("creaturedisplayinfo", build);
+            var modelFileData = dbcManager.GetOrLoad("modelfiledata", build);
+            var itemDisplayInfo = dbcManager.GetOrLoad("itemdisplayinfo", build);
+            var textureFileData = dbcManager.GetOrLoad("texturefiledata", build);
+            var creatureModelData = dbcManager.GetOrLoad("creaturemodeldata", build);
+            var creatureDisplayInfo = dbcManager.GetOrLoad("creaturedisplayinfo", build);
 
             var returnList = new Dictionary<uint, List<uint>>();
 

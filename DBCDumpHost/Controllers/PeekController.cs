@@ -1,7 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DBCD;
+using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DBCDumpHost.Controllers
 {
@@ -9,6 +12,14 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class PeekController : ControllerBase
     {
+        private readonly DBCManager dbcManager;
+
+        public PeekController(IDBCManager dbcManager)
+        {
+            this.dbcManager = dbcManager as DBCManager;
+        }
+
+
         public struct PeekResult
         {
             public List<(string, string)> values;
@@ -28,54 +39,51 @@ namespace DBCDumpHost.Controllers
         {
             Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ") value " + val);
 
-            var storage = DBCManager.GetOrLoad(name, build);
+            var storage = dbcManager.GetOrLoad(name, build);
 
-            if (storage.Values.Count == 0)
+            if (!storage.Values.Any())
             {
                 throw new Exception("No rows found!");
             }
-
-            var fields = DefinitionManager.definitionCache[(name, build)].GetFields();
 
             var result = new PeekResult();
             result.values = new List<(string, string)>();
 
             var offset = 0;
             var recordFound = false;
-            foreach (var item in storage.Values)
+            foreach (DBCDRow item in storage.Values)
             {
                 if (recordFound)
                     continue;
 
                 offset++;
 
-                for (var i = 0; i < fields.Length; ++i)
+                for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                 {
-                    var field = fields[i];
+                    string fieldName = storage.AvailableColumns[i];
+                    var field = item[fieldName];
 
-                    if (field.Name != col)
+                    if (fieldName != col)
                         continue;
 
                     // Don't think FKs to arrays are possible, so only check regular value
-                    if (field.GetValue(item).ToString() == val.ToString())
+                    if (field.ToString() == val.ToString())
                     {
-                        for (var j = 0; j < fields.Length; ++j)
+                        for (var j = 0; j < storage.AvailableColumns.Length; ++j)
                         {
-                            var subfield = fields[j];
+                            string subfieldName = storage.AvailableColumns[j];
+                            var subfield = item[subfieldName];
 
-                            if (subfield.FieldType.IsArray)
+                            if (subfield is Array a)
                             {
-                                var a = (Array)subfield.GetValue(item);
-
                                 for (var k = 0; k < a.Length; k++)
                                 {
-                                    var isEndOfArray = a.Length - 1 == k;
-                                    result.values.Add((subfield.Name + "[" + k + "]", a.GetValue(k).ToString()));
+                                    result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
                                 }
                             }
                             else
                             {
-                                result.values.Add((subfield.Name, subfield.GetValue(item).ToString()));
+                                result.values.Add((subfieldName, subfield.ToString()));
                             }
                         }
 

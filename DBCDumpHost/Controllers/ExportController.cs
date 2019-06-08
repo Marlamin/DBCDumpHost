@@ -1,8 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using DBCD;
+using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace DBCDumpHost.Controllers
 {
@@ -10,6 +13,14 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class ExportController : ControllerBase
     {
+        private readonly DBCManager dbcManager;
+
+        public ExportController(IDBCManager dbcManager)
+        {
+            this.dbcManager = dbcManager as DBCManager;
+        }
+
+
         [Route("")]
         [Route("csv")]
         [HttpGet]
@@ -18,45 +29,43 @@ namespace DBCDumpHost.Controllers
             Logger.WriteLine("Exporting DBC " + name + " for build " + build);
             try
             {
-                var storage = DBCManager.GetOrLoad(name, build);
-                if (storage.Values.Count == 0)
+                var storage = dbcManager.GetOrLoad(name, build);
+                if (!storage.Values.Any())
                 {
                     throw new Exception("No rows found!");
                 }
-
-                var fields = DefinitionManager.definitionCache[(name, build)].GetFields();
 
                 var headerWritten = false;
 
                 using (var exportStream = new MemoryStream())
                 using (var exportWriter = new StreamWriter(exportStream))
                 {
-                    foreach (var item in storage.Values)
+                    foreach (DBCDRow item in storage.Values)
                     {
                         // Write CSV header
                         if (!headerWritten)
                         {
-                            for (var j = 0; j < fields.Length; ++j)
+                            for (var j = 0; j < storage.AvailableColumns.Length; ++j)
                             {
-                                var field = fields[j];
+                                string fieldname = storage.AvailableColumns[j];
+                                var field = item[fieldname];
 
-                                var isEndOfRecord = fields.Length - 1 == j;
+                                var isEndOfRecord = j == storage.AvailableColumns.Length - 1;
 
-                                if (field.FieldType.IsArray)
+                                if (field is Array a)
                                 {
-                                    var a = (Array)field.GetValue(item);
                                     for (var i = 0; i < a.Length; i++)
                                     {
                                         var isEndOfArray = a.Length - 1 == i;
 
-                                        exportWriter.Write($"{field.Name}[{i}]");
+                                        exportWriter.Write($"{fieldname}[{i}]");
                                         if (!isEndOfArray)
                                             exportWriter.Write(",");
                                     }
                                 }
                                 else
                                 {
-                                    exportWriter.Write(field.Name);
+                                    exportWriter.Write(fieldname);
                                 }
 
                                 if (!isEndOfRecord)
@@ -66,16 +75,14 @@ namespace DBCDumpHost.Controllers
                             exportWriter.WriteLine();
                         }
 
-                        for (var i = 0; i < fields.Length; ++i)
+                        for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                         {
-                            var field = fields[i];
+                            var field = item[storage.AvailableColumns[i]];
 
-                            var isEndOfRecord = fields.Length - 1 == i;
+                            var isEndOfRecord = i == storage.AvailableColumns.Length - 1;
 
-                            if (field.FieldType.IsArray)
+                            if (field is Array a)
                             {
-                                var a = (Array)field.GetValue(item);
-
                                 for (var j = 0; j < a.Length; j++)
                                 {
                                     var isEndOfArray = a.Length - 1 == j;
@@ -87,7 +94,7 @@ namespace DBCDumpHost.Controllers
                             }
                             else
                             {
-                                var value = field.GetValue(item);
+                                var value = field;
                                 if (value.GetType() == typeof(string))
                                     value = StringToCSVCell((string)value);
 

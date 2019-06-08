@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using DBCD.Providers;
+using DBCDumpHost.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace DBCDumpHost
 {
@@ -27,13 +21,15 @@ namespace DBCDumpHost
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSingleton<IDBDProvider, DBDProvider>();
+            services.AddSingleton<IDBCProvider, DBCProvider>();
+            services.AddSingleton<IDBCManager, DBCManager>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            DefinitionManager.LoadDefinitions();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

@@ -1,8 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using DBCD;
+using DBCD.Providers;
+using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DBCDumpHost.Controllers
 {
@@ -17,6 +20,15 @@ namespace DBCDumpHost.Controllers
             public int recordsTotal;
             public List<List<string>> data;
             public string error;
+        }
+
+        private readonly DBDProvider dbdProvider;
+        private readonly DBCManager dbcManager;
+
+        public DataController(IDBDProvider dbdProvider, IDBCManager dbcManager)
+        {
+            this.dbdProvider = dbdProvider as DBDProvider;
+            this.dbcManager = dbcManager as DBCManager;
         }
 
         // GET: data/
@@ -43,41 +55,38 @@ namespace DBCDumpHost.Controllers
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with filter " + searchValue);
             }
 
-            var result = new DataTablesResult();
-
-            result.draw = draw;
+            var result = new DataTablesResult
+            {
+                draw = draw
+            };
 
             try
             {
-                var storage = DBCManager.GetOrLoad(name, build);
-                result.recordsTotal = storage.Values.Count;
+                var storage = dbcManager.GetOrLoad(name, build);
 
-                if(!DefinitionManager.definitionCache.ContainsKey((name, build)))
+                if(storage == null)
                 {
                     throw new Exception("Definitions for this DB/version combo not found in definition cache!");
                 }
 
-                var fields = DefinitionManager.definitionCache[(name, build)].GetFields();
+                result.recordsTotal = storage.Values.Count();
 
                 result.data = new List<List<string>>();
 
                 var resultCount = 0;
-                foreach (var item in storage.Values)
+                foreach (DBCDRow item in storage.Values)
                 {
                     var rowList = new List<string>();
                     var matches = false;
 
-                    for (var i = 0; i < fields.Length; ++i)
+                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                     {
-                        var field = fields[i];
+                        var field = item[storage.AvailableColumns[i]];
 
-                        if (field.FieldType.IsArray)
+                        if (field is Array a)
                         {
-                            var a = (Array)field.GetValue(item);
-
                             for (var j = 0; j < a.Length; j++)
                             {
-                                var isEndOfArray = a.Length - 1 == j;
                                 var val = a.GetValue(j).ToString();
                                 if (searching)
                                 {
@@ -90,7 +99,7 @@ namespace DBCDumpHost.Controllers
                         }
                         else
                         {
-                            var val = field.GetValue(item).ToString();
+                            var val = field.ToString();
                             if (searching)
                             {
                                 if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
