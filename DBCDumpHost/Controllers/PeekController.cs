@@ -41,13 +41,13 @@ namespace DBCDumpHost.Controllers
 
             var storage = dbcManager.GetOrLoad(name, build);
 
-            if (!storage.Values.Any())
-            {
-                throw new Exception("No rows found!");
-            }
-
             var result = new PeekResult();
             result.values = new List<(string, string)>();
+
+            if (!storage.Values.Any())
+            {
+                return result;
+            }
 
             var offset = 0;
             var recordFound = false;
