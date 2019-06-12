@@ -61,5 +61,11 @@ namespace DBCDumpHost.Services
             DBCD.DBCD storage = new DBCD.DBCD(dbcProvider, dbdProvider);
             return storage.Load(name, build);
         }
+
+        public void ClearCache()
+        {
+            Cache.Dispose();
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100 });
+        }
     }
 }

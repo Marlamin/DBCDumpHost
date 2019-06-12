@@ -9,19 +9,21 @@ namespace DBCDumpHost.Controllers
     public class ReloadDefsController : ControllerBase
     {
         private readonly DBDProvider dbdProvider;
+        private readonly DBCManager dbcManager;
 
-        public ReloadDefsController(IDBDProvider dbdProvider)
+        public ReloadDefsController(IDBDProvider dbdProvider, IDBCManager dbcManager)
         {
             this.dbdProvider = dbdProvider as DBDProvider;
+            this.dbcManager = dbcManager as DBCManager;
         }
-
 
         // GET: api/ReloadDefs
         [HttpGet]
         public string Get()
         {
             int count = dbdProvider.LoadDefinitions();
-            return "Reloaded " + count + " definitions!";
+            dbcManager.ClearCache();
+            return "Reloaded " + count + " definitions and cleared DBC cache!";
         }
     }
 }
