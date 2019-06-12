@@ -1,6 +1,7 @@
 ﻿using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using DBDiffer;
+using DBDiffer.DiffResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 
@@ -26,11 +27,11 @@ namespace DBCDumpHost.Controllers
 
             Logger.WriteLine("Serving diff for " + name + " between " + build1 + " and " + build2);
 
-            var dbc1 = dbcManager.GetOrLoad(name, build1) as IDictionary;
-            var dbc2 = dbcManager.GetOrLoad(name, build2) as IDictionary;
+            var dbc1 = dbcManager.GetOrLoad(name, build1).BackingCollection;
+            var dbc2 = dbcManager.GetOrLoad(name, build2).BackingCollection;
 
             var comparer = new DBComparer(dbc1, dbc2);
-            var diff = comparer.Diff(DiffType.WoWTools);
+            WoWToolsDiffResult diff = (WoWToolsDiffResult)comparer.Diff(DiffType.WoWTools);
 
             return diff.ToJSONString();
         }

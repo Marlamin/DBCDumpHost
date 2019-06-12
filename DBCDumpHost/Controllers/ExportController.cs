@@ -20,7 +20,6 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
         }
 
-
         [Route("")]
         [Route("csv")]
         [HttpGet]
