@@ -23,7 +23,7 @@ namespace DBCDumpHost.Controllers
         [Route("")]
         [Route("csv")]
         [HttpGet]
-        public ActionResult ExportCSV(string name, string build)
+        public ActionResult ExportCSV(string name, string build, bool newLinesInStrings = true)
         {
             Logger.WriteLine("Exporting DBC " + name + " for build " + build);
             try
@@ -95,7 +95,7 @@ namespace DBCDumpHost.Controllers
                             {
                                 var value = field;
                                 if (value.GetType() == typeof(string))
-                                    value = StringToCSVCell((string)value);
+                                    value = StringToCSVCell((string)value, newLinesInStrings);
 
                                 exportWriter.Write(value);
                             }
@@ -127,8 +127,13 @@ namespace DBCDumpHost.Controllers
             }
         }
 
-        public static string StringToCSVCell(string str)
+        public static string StringToCSVCell(string str, bool newLinesInStrings)
         {
+            if (!newLinesInStrings)
+            {
+                str = str.Replace("\n", "").Replace("\r", "");
+            }
+
             var mustQuote = (str.Contains(",") || str.Contains("\"") || str.Contains("\r") || str.Contains("\n"));
             if (mustQuote)
             {
