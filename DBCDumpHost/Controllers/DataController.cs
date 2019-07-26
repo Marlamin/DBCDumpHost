@@ -94,6 +94,8 @@ namespace DBCDumpHost.Controllers
                                         matches = true;
                                 }
 
+                                val = System.Web.HttpUtility.HtmlEncode(val);
+
                                 rowList.Add(val);
                             }
                         }
@@ -105,6 +107,8 @@ namespace DBCDumpHost.Controllers
                                 if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
                                     matches = true;
                             }
+
+                            val = System.Web.HttpUtility.HtmlEncode(val);
 
                             rowList.Add(val);
                         }
