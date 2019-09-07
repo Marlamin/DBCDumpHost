@@ -52,7 +52,7 @@ namespace DBCDumpHost.Controllers
             else
             {
                 searching = true;
-                Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with filter " + searchValue);
+                Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with search " + searchValue);
             }
 
             var result = new DataTablesResult
@@ -73,6 +73,20 @@ namespace DBCDumpHost.Controllers
 
                 result.data = new List<List<string>>();
 
+                var filtering = false;
+                var filters = new Dictionary<int, string>();
+
+                // this is gonna break for tables with arrays
+                for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                {
+                    if (Request.Query.ContainsKey("columns[" + i + "][search][value]") && !string.IsNullOrWhiteSpace(Request.Query["columns[" + i + "][search][value]"]))
+                    {
+                        searching = true;
+                        filtering = true;
+                        filters.Add(i, Request.Query["columns[" + i + "][search][value]"]);
+                    }
+                }
+
                 var resultCount = 0;
                 foreach (DBCDRow item in storage.Values)
                 {
@@ -90,8 +104,11 @@ namespace DBCDumpHost.Controllers
                                 var val = a.GetValue(j).ToString();
                                 if (searching)
                                 {
-                                    if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
-                                        matches = true;
+                                    if (!filtering)
+                                    {
+                                        if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
+                                            matches = true;
+                                    }
                                 }
 
                                 val = System.Web.HttpUtility.HtmlEncode(val);
@@ -104,8 +121,16 @@ namespace DBCDumpHost.Controllers
                             var val = field.ToString();
                             if (searching)
                             {
-                                if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
-                                    matches = true;
+                                if (filtering)
+                                {
+                                    if(filters.ContainsKey(i) && filters[i] == val)
+                                        matches = true;
+                                }
+                                else
+                                {
+                                    if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
+                                        matches = true;
+                                }
                             }
 
                             val = System.Web.HttpUtility.HtmlEncode(val);
