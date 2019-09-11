@@ -74,6 +74,11 @@ namespace DBCDumpHost.Controllers
                 }
             }
 
+            if (!parameters.ContainsKey("search[value]"))
+            {
+                parameters.Add("search[value]", "");
+            }
+
             var searchValue = parameters["search[value]"];
 
             if (string.IsNullOrWhiteSpace(searchValue))
@@ -191,7 +196,6 @@ namespace DBCDumpHost.Controllers
                                                 }
                                                 else
                                                 {
-                                                    Console.WriteLine(val + " does not match " + filters[siteColIndex].Item1 + ", filtering out");
                                                     allMatch = false;
                                                 }
                                             }
@@ -199,13 +203,10 @@ namespace DBCDumpHost.Controllers
                                             {
                                                 if (val.Contains(filters[siteColIndex].Item1, StringComparison.InvariantCultureIgnoreCase))
                                                 {
-                                                    Console.WriteLine(val + " matches column query " + filters[siteColIndex].Item1);
-
                                                     matches = true;
                                                 }
                                                 else
                                                 {
-                                                    Console.WriteLine(val + " does not match " + filters[siteColIndex].Item1 + ", filtering out");
                                                     allMatch = false;
                                                 }
                                             }
@@ -242,7 +243,6 @@ namespace DBCDumpHost.Controllers
                                             }
                                             else
                                             {
-                                                Console.WriteLine(val + " does not match " + filters[siteColIndex].Item1 + ", filtering out");
                                                 allMatch = false;
                                             }
                                         }
@@ -250,13 +250,10 @@ namespace DBCDumpHost.Controllers
                                         {
                                             if (val.Contains(filters[siteColIndex].Item1, StringComparison.InvariantCultureIgnoreCase))
                                             {
-                                                Console.WriteLine(val + " matches column query " + filters[siteColIndex].Item1);
-
                                                 matches = true;
                                             }
                                             else
                                             {
-                                                Console.WriteLine(val + " does not match " + filters[siteColIndex].Item1 + ", filtering out");
                                                 allMatch = false;
                                             }
                                         }
