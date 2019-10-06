@@ -18,7 +18,7 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
         }
 
-        public string Diff(string name, string build1, string build2)
+        public string Diff(string name, string build1, string build2, bool useHotfixesFor1 = false, bool useHotfixesFor2 = false)
         {
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(build1) || string.IsNullOrEmpty(build2))
             {
@@ -27,8 +27,8 @@ namespace DBCDumpHost.Controllers
 
             Logger.WriteLine("Serving diff for " + name + " between " + build1 + " and " + build2);
 
-            var dbc1 = dbcManager.GetOrLoad(name, build1).BackingCollection;
-            var dbc2 = dbcManager.GetOrLoad(name, build2).BackingCollection;
+            var dbc1 = dbcManager.GetOrLoad(name, build1, useHotfixesFor1).BackingCollection;
+            var dbc2 = dbcManager.GetOrLoad(name, build2, useHotfixesFor2).BackingCollection;
 
             var comparer = new DBComparer(dbc1, dbc2);
             WoWToolsDiffResult diff = (WoWToolsDiffResult)comparer.Diff(DiffType.WoWTools);
