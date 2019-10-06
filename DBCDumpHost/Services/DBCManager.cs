@@ -31,6 +31,16 @@ namespace DBCDumpHost.Services
 
         public IDBCDStorage GetOrLoad(string name, string build)
         {
+            return GetOrLoad(name, build, false);
+        }
+
+        public IDBCDStorage GetOrLoad(string name, string build, bool useHotfixes = false)
+        {
+            if (useHotfixes)
+            {
+                return LoadDBC(name, build, useHotfixes);
+            }
+
             if (!Cache.TryGetValue((name, build), out IDBCDStorage cachedDBC))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd((name, build), k => new SemaphoreSlim(1, 1));
@@ -43,8 +53,7 @@ namespace DBCDumpHost.Services
                     {
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " is not cached, loading! (Cache currently at " + Cache.Count + " entries!)");
-                        cachedDBC = LoadDBC(name, build);
-                        Cache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+                        cachedDBC = LoadDBC(name, build, useHotfixes);
                     }
                 }
                 finally
@@ -56,10 +65,22 @@ namespace DBCDumpHost.Services
             return cachedDBC;
         }
 
-        private IDBCDStorage LoadDBC(string name, string build = null)
+        private IDBCDStorage LoadDBC(string name, string build = null, bool useHotfixes = false)
         {
-            DBCD.DBCD storage = new DBCD.DBCD(dbcProvider, dbdProvider);
-            return storage.Load(name, build);
+            var dbcd = new DBCD.DBCD(dbcProvider, dbdProvider);
+            var storage = dbcd.Load(name, build);
+
+            if (useHotfixes)
+            {
+                var hotfixes = new HotfixReader("DBCache.bin");
+                var countBefore = storage.Count;
+                storage = storage.ApplyingHotfixes(hotfixes);
+                var countAfter = storage.Count;
+
+                Logger.WriteLine("Applied hotfixes to table " + name + ", count before = " + countBefore + ", after = " + countAfter);
+            }
+            
+            return storage;
         }
 
         public void ClearCache()

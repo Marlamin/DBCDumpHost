@@ -40,7 +40,7 @@ namespace DBCDumpHost.Controllers
 
         // GET/POST: data/name
         [HttpGet("{name}"), HttpPost("{name}")]
-        public DataTablesResult Get(string name, string build, int draw, int start, int length)
+        public DataTablesResult Get(string name, string build, int draw, int start, int length, bool useHotfixes = false)
         {
             var searching = false;
 
@@ -96,7 +96,7 @@ namespace DBCDumpHost.Controllers
 
             try
             {
-                var storage = dbcManager.GetOrLoad(name, build);
+                var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
 
                 if(storage == null)
                 {
