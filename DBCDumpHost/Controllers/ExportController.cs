@@ -23,12 +23,12 @@ namespace DBCDumpHost.Controllers
         [Route("")]
         [Route("csv")]
         [HttpGet]
-        public ActionResult ExportCSV(string name, string build, bool newLinesInStrings = true)
+        public ActionResult ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true)
         {
             Logger.WriteLine("Exporting DBC " + name + " for build " + build);
             try
             {
-                var storage = dbcManager.GetOrLoad(name, build);
+                var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
                 if (!storage.Values.Any())
                 {
                     throw new Exception("No rows found!");
