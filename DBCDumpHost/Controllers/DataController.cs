@@ -48,7 +48,6 @@ namespace DBCDumpHost.Controllers
 
             if(Request.Method == "POST")
             {
-                Console.WriteLine("POST: " + Request.Form.Count);
                 // POST, what site uses
                 foreach (var post in Request.Form)
                 {
@@ -66,7 +65,6 @@ namespace DBCDumpHost.Controllers
             }
             else
             {
-                Console.WriteLine("GET: " + Request.QueryString);
                 // GET, backwards compatibility for scripts/users using this
                 foreach (var get in Request.Query)
                 {
