@@ -53,7 +53,8 @@ namespace DBCDumpHost.Services
                     {
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " is not cached, loading! (Cache currently at " + Cache.Count + " entries!)");
-                        cachedDBC = LoadDBC(name, build, useHotfixes);
+                        cachedDBC = LoadDBC(name, build, false);
+                        Cache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
                 finally
@@ -72,9 +73,8 @@ namespace DBCDumpHost.Services
 
             if (useHotfixes)
             {
-                var hotfixes = new HotfixReader("DBCache.bin");
                 var countBefore = storage.Count;
-                storage = storage.ApplyingHotfixes(hotfixes);
+                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReader);
                 var countAfter = storage.Count;
 
                 Logger.WriteLine("Applied hotfixes to table " + name + ", count before = " + countBefore + ", after = " + countAfter);
