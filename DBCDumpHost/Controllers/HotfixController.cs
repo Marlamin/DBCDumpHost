@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
@@ -14,10 +15,39 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class HotfixController : ControllerBase
     {
+        private bool CheckUserToken(string token)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var result = client.GetStringAsync("https://wow.tools/api.php?type=token&token=" + token).Result;
+                    if(result == "1")
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }catch(Exception e)
+            {
+                Logger.WriteLine("Error checking user token: " + e.Message);
+                return false;
+            }
+        }
+
         [HttpPost]
         [Route("upload")]
         public async Task<IActionResult> Upload(List<IFormFile> files)
         {
+            if (!Request.Headers.ContainsKey("WT-UserToken") || !CheckUserToken(Request.Headers["WT-UserToken"]))
+            {
+                Logger.WriteLine("Got cache upload with unknown/bad usertoken, ignoring..");
+                return Unauthorized();
+            }
+
             Logger.WriteLine("Cache upload: " + files[0].Length);
             long size = files.Sum(f => f.Length);
 
