@@ -71,6 +71,14 @@ namespace DBCDumpHost.Controllers
             return Ok();
         }
 
+        [HttpGet]
+        [Route("refresh")]
+        public string Get()
+        {
+            HotfixManager.LoadCaches();
+            return "Refreshed hotfixes!";
+        }
+
         private void ProcessCache(MemoryStream stream)
         {
             Logger.WriteLine("New cache of size " + stream.Length + " received!");
@@ -99,7 +107,7 @@ namespace DBCDumpHost.Controllers
                 var sha = bin.ReadBytes(32);
 
                 stream.Position = 0;
-                HotfixManager.AddCache(stream);
+                HotfixManager.AddCache(stream, build);
             }
         }
     }

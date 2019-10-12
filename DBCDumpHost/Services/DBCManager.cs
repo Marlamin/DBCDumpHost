@@ -66,15 +66,23 @@ namespace DBCDumpHost.Services
             return cachedDBC;
         }
 
-        private IDBCDStorage LoadDBC(string name, string build = null, bool useHotfixes = false)
+        private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false)
         {
             var dbcd = new DBCD.DBCD(dbcProvider, dbdProvider);
             var storage = dbcd.Load(name, build);
+            var splitBuild = build.Split('.');
 
-            if (useHotfixes)
+            if (splitBuild.Length != 4)
+            {
+                throw new Exception("Invalid build!");
+            }
+
+            var buildNumber = uint.Parse(splitBuild[3]);
+
+            if (useHotfixes && HotfixManager.hotfixReaders.ContainsKey(buildNumber))
             {
                 var countBefore = storage.Count;
-                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReader);
+                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
                 var countAfter = storage.Count;
 
                 Logger.WriteLine("Applied hotfixes to table " + name + ", count before = " + countBefore + ", after = " + countAfter);
