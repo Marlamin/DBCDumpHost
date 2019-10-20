@@ -15,15 +15,12 @@ namespace DBCDumpHost.Services
             LoadCaches();
         }
 
-        public static void LoadCaches()
+        public static Dictionary<uint, List<string>> GetHotfixDBsPerBuild()
         {
-            Logger.WriteLine("Loading hotfixes..");
-
             var filesPerBuild = new Dictionary<uint, List<string>>();
 
             foreach (var file in Directory.GetFiles("caches", "*.bin"))
             {
-                // Make list per build
                 using (var stream = File.OpenRead(file))
                 using (var bin = new BinaryReader(stream))
                 {
@@ -38,6 +35,15 @@ namespace DBCDumpHost.Services
                 }
             }
 
+            return filesPerBuild;
+        }
+
+        public static void LoadCaches()
+        {
+            Logger.WriteLine("Loading hotfixes..");
+
+            var filesPerBuild = GetHotfixDBsPerBuild();
+
             foreach (var fileList in filesPerBuild)
             {
                 hotfixReaders.Clear();
@@ -47,9 +53,9 @@ namespace DBCDumpHost.Services
             }
         }
 
-        public static void AddCache(MemoryStream cache, uint build)
+        public static void AddCache(MemoryStream cache, uint build, int userID)
         {
-            var filename = Path.Combine("caches", "DBCache-" + build + "-" + ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds() + "-" + DateTime.Now.Millisecond + ".bin");
+            var filename = Path.Combine("caches", "DBCache-" + build + "-" + userID + "-" + ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds() + "-" + DateTime.Now.Millisecond + ".bin");
             using (var stream = File.Create(filename))
             {
                 cache.CopyTo(stream);

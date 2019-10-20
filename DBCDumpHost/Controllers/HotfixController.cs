@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
+using DBFileReaderLib;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,26 +16,19 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class HotfixController : ControllerBase
     {
-        private bool CheckUserToken(string token)
+        private int GetUserIDByToken(string token)
         {
             try
             {
                 using (var client = new HttpClient())
                 {
                     var result = client.GetStringAsync("https://wow.tools/api.php?type=token&token=" + token).Result;
-                    if(result == "1")
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return int.Parse(result);
                 }
             }catch(Exception e)
             {
                 Logger.WriteLine("Error checking user token: " + e.Message);
-                return false;
+                return 0;
             }
         }
 
@@ -42,9 +36,17 @@ namespace DBCDumpHost.Controllers
         [Route("upload")]
         public async Task<IActionResult> Upload(List<IFormFile> files)
         {
-            if (!Request.Headers.ContainsKey("WT-UserToken") || !CheckUserToken(Request.Headers["WT-UserToken"]))
+            if (!Request.Headers.ContainsKey("WT-UserToken"))
             {
-                Logger.WriteLine("Got cache upload with unknown/bad usertoken, ignoring..");
+                Logger.WriteLine("No user token given!");
+                return Unauthorized();
+            }
+
+            var userID = GetUserIDByToken(Request.Headers["WT-UserToken"]);
+
+            if (userID == 0)
+            {
+                Logger.WriteLine("No user token given!");
                 return Unauthorized();
             }
 
@@ -63,7 +65,7 @@ namespace DBCDumpHost.Controllers
                     using (var stream = new MemoryStream())
                     {
                         await formFile.CopyToAsync(stream);
-                        ProcessCache(stream);
+                        ProcessCache(stream, userID);
                     }
                 }
             }
@@ -79,7 +81,7 @@ namespace DBCDumpHost.Controllers
             return "Refreshed hotfixes!";
         }
 
-        private void ProcessCache(MemoryStream stream)
+        private void ProcessCache(MemoryStream stream, int userID)
         {
             Logger.WriteLine("New cache of size " + stream.Length + " received!");
             stream.Position = 0;
@@ -107,7 +109,7 @@ namespace DBCDumpHost.Controllers
                 var sha = bin.ReadBytes(32);
 
                 stream.Position = 0;
-                HotfixManager.AddCache(stream, build);
+                HotfixManager.AddCache(stream, build, userID);
             }
         }
     }
