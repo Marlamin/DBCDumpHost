@@ -42,11 +42,12 @@ namespace DBCDumpHost.Services
         {
             Logger.WriteLine("Loading hotfixes..");
 
+            hotfixReaders.Clear();
+
             var filesPerBuild = GetHotfixDBsPerBuild();
 
             foreach (var fileList in filesPerBuild)
             {
-                hotfixReaders.Clear();
                 hotfixReaders.Add(fileList.Key, new HotfixReader(fileList.Value[0]));
                 hotfixReaders[fileList.Key].CombineCaches(fileList.Value.ToArray());
                 Logger.WriteLine("Loaded " + fileList.Value.Count + " hotfix DBs for build " + fileList.Key + "!");
