@@ -17,6 +17,7 @@ namespace DBCDumpHost.Controllers
         {
             public List<string> headers;
             public Dictionary<string, string> fks;
+            public Dictionary<string, string> comments;
             public string error;
         }
 
@@ -55,6 +56,7 @@ namespace DBCDumpHost.Controllers
 
                 result.headers = new List<string>();
                 result.fks = new Dictionary<string, string>();
+                result.comments = new Dictionary<string, string>();
 
                 if (!storage.Values.Any())
                 {
@@ -68,6 +70,11 @@ namespace DBCDumpHost.Controllers
                             if (columnDef.foreignTable != null)
                             {
                                 result.fks.Add(fieldName, columnDef.foreignTable + "::" + columnDef.foreignColumn);
+                            }
+
+                            if (columnDef.comment != null)
+                            {
+                                result.comments.Add(fieldName, columnDef.comment);
                             }
                         }
                     }
@@ -93,6 +100,11 @@ namespace DBCDumpHost.Controllers
                                         {
                                             result.fks.Add($"{fieldName}[{i}]", columnDef.foreignTable + "::" + columnDef.foreignColumn);
                                         }
+
+                                        if (columnDef.comment != null)
+                                        {
+                                            result.comments.Add(fieldName, columnDef.comment);
+                                        }
                                     }
                                 }
                             }
@@ -105,6 +117,11 @@ namespace DBCDumpHost.Controllers
                                     if (columnDef.foreignTable != null)
                                     {
                                         result.fks.Add(fieldName, columnDef.foreignTable + "::" + columnDef.foreignColumn);
+                                    }
+
+                                    if (columnDef.comment != null)
+                                    {
+                                        result.comments.Add(fieldName, columnDef.comment);
                                     }
                                 }
                             }
