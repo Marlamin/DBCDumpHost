@@ -103,7 +103,7 @@ namespace DBCDumpHost.Controllers
 
                                         if (columnDef.comment != null)
                                         {
-                                            result.comments.Add(fieldName, columnDef.comment);
+                                            result.comments.Add($"{fieldName}[{i}]", columnDef.comment);
                                         }
                                     }
                                 }
