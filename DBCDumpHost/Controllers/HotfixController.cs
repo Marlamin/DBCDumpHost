@@ -96,7 +96,7 @@ namespace DBCDumpHost.Controllers
                 }
 
                 var version = bin.ReadUInt32();
-                if(version != 7)
+                if(version > 7)
                 {
                     Logger.WriteLine("Unsupported DBCache version: " + version);
                     return;
