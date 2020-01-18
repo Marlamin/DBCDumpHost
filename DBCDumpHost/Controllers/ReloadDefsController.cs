@@ -23,6 +23,7 @@ namespace DBCDumpHost.Controllers
         {
             int count = dbdProvider.LoadDefinitions();
             dbcManager.ClearCache();
+            dbcManager.ClearHotfixCache();
             return "Reloaded " + count + " definitions and cleared DBC cache!";
         }
     }

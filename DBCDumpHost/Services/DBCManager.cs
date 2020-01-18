@@ -18,7 +18,9 @@ namespace DBCDumpHost.Services
         private readonly DBCProvider dbcProvider;
 
         private MemoryCache Cache;
+        private MemoryCache HotfixCache;
         private ConcurrentDictionary<(string, string), SemaphoreSlim> Locks;
+        private ConcurrentDictionary<(string, string), SemaphoreSlim> HotfixLocks;
 
         public DBCManager(IDBDProvider dbdProvider, IDBCProvider dbcProvider)
         {
@@ -26,7 +28,9 @@ namespace DBCDumpHost.Services
             this.dbcProvider = dbcProvider as DBCProvider;
 
             Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+            HotfixCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 50 });
             Locks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
+            HotfixLocks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
         }
 
         public IDBCDStorage GetOrLoad(string name, string build)
@@ -36,25 +40,29 @@ namespace DBCDumpHost.Services
 
         public IDBCDStorage GetOrLoad(string name, string build, bool useHotfixes = false)
         {
+            ref ConcurrentDictionary<(string, string), SemaphoreSlim> targetLocks = ref Locks;
+            ref MemoryCache targetCache = ref Cache;
+
             if (useHotfixes)
             {
-                return LoadDBC(name, build, useHotfixes);
+                targetCache = ref HotfixCache;
+                targetLocks = ref HotfixLocks;
             }
 
-            if (!Cache.TryGetValue((name, build), out IDBCDStorage cachedDBC))
+            if (!targetCache.TryGetValue((name, build), out IDBCDStorage cachedDBC))
             {
-                SemaphoreSlim mylock = Locks.GetOrAdd((name, build), k => new SemaphoreSlim(1, 1));
+                SemaphoreSlim mylock = targetLocks.GetOrAdd((name, build), k => new SemaphoreSlim(1, 1));
 
                 mylock.Wait();
 
                 try
                 {
-                    if (!Cache.TryGetValue((name, build), out cachedDBC))
+                    if (!targetCache.TryGetValue((name, build), out cachedDBC))
                     {
                         // Key not in cache, load DBC
-                        Logger.WriteLine("DBC " + name + " for build " + build + " is not cached, loading! (Cache currently at " + Cache.Count + " entries!)");
-                        cachedDBC = LoadDBC(name, build, false);
-                        Cache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+                        Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
+                        cachedDBC = LoadDBC(name, build, useHotfixes);
+                        targetCache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
                 finally
@@ -94,7 +102,13 @@ namespace DBCDumpHost.Services
         public void ClearCache()
         {
             Cache.Dispose();
-            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100 });
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+        }
+
+        public void ClearHotfixCache()
+        {
+            HotfixCache.Dispose();
+            HotfixCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 50 });
         }
     }
 }

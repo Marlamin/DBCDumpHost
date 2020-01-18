@@ -16,6 +16,13 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class HotfixController : ControllerBase
     {
+        private readonly DBCManager dbcManager;
+
+        public HotfixController(IDBCManager dbcManager)
+        {
+            this.dbcManager = dbcManager as DBCManager;
+        }
+
         private int GetUserIDByToken(string token)
         {
             try
@@ -111,6 +118,8 @@ namespace DBCDumpHost.Controllers
                 stream.Position = 0;
                 HotfixManager.AddCache(stream, build, userID);
             }
+
+            dbcManager.ClearHotfixCache();
         }
     }
 }
