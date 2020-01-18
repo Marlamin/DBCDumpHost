@@ -10,11 +10,6 @@ namespace DBCDumpHost.Services
     {
         public static Dictionary<uint, HotfixReader> hotfixReaders = new Dictionary<uint, HotfixReader>();
 
-        static HotfixManager()
-        {
-            LoadCaches();
-        }
-
         public static Dictionary<uint, List<string>> GetHotfixDBsPerBuild(uint targetBuild = 0)
         {
             var filesPerBuild = new Dictionary<uint, List<string>>();

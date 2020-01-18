@@ -79,12 +79,15 @@ namespace DBCDumpHost.Services
 
             var buildNumber = uint.Parse(splitBuild[3]);
 
-            if (useHotfixes && HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+            if (useHotfixes)
             {
-                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
-                Logger.WriteLine("Applied hotfixes to table " + name);
+                if(!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                    HotfixManager.LoadCaches(buildNumber);
+
+                if(HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                    storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
             }
-            
+
             return storage;
         }
 
