@@ -19,7 +19,6 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
         }
 
-
         public struct PeekResult
         {
             public List<(string, string)> values;
@@ -61,10 +60,11 @@ namespace DBCDumpHost.Controllers
                 for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                 {
                     string fieldName = storage.AvailableColumns[i];
-                    var field = item[fieldName];
 
                     if (fieldName != col)
                         continue;
+
+                    var field = item[fieldName];
 
                     // Don't think FKs to arrays are possible, so only check regular value
                     if (field.ToString() == val.ToString())

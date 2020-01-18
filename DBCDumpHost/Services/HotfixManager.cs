@@ -15,7 +15,7 @@ namespace DBCDumpHost.Services
             LoadCaches();
         }
 
-        public static Dictionary<uint, List<string>> GetHotfixDBsPerBuild()
+        public static Dictionary<uint, List<string>> GetHotfixDBsPerBuild(uint targetBuild = 0)
         {
             var filesPerBuild = new Dictionary<uint, List<string>>();
 
@@ -26,6 +26,11 @@ namespace DBCDumpHost.Services
                 {
                     bin.BaseStream.Position = 8;
                     var build = bin.ReadUInt32();
+
+                    // If only requesting files for 1 build, skip others
+                    if (targetBuild != 0 && targetBuild != build)
+                        continue;
+
                     if (!filesPerBuild.ContainsKey(build))
                     {
                         filesPerBuild.Add(build, new List<string>());
@@ -38,13 +43,20 @@ namespace DBCDumpHost.Services
             return filesPerBuild;
         }
 
-        public static void LoadCaches()
+        public static void LoadCaches(uint targetBuild = 0)
         {
-            Logger.WriteLine("Loading hotfixes..");
+            var filesPerBuild = GetHotfixDBsPerBuild(targetBuild);
 
-            hotfixReaders.Clear();
-
-            var filesPerBuild = GetHotfixDBsPerBuild();
+            if (targetBuild != 0)
+            {
+                Logger.WriteLine("Reloading hotfixes for build " + targetBuild + "..");
+                hotfixReaders.Remove(targetBuild);
+            }
+            else
+            {
+                Logger.WriteLine("Reloading all hotfixes..");
+                hotfixReaders.Clear();
+            }
 
             foreach (var fileList in filesPerBuild)
             {
@@ -61,7 +73,7 @@ namespace DBCDumpHost.Services
             {
                 cache.CopyTo(stream);
             }
-            LoadCaches();
+            LoadCaches(build);
         }
     }
 }

@@ -81,11 +81,8 @@ namespace DBCDumpHost.Services
 
             if (useHotfixes && HotfixManager.hotfixReaders.ContainsKey(buildNumber))
             {
-                var countBefore = storage.Count;
                 storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
-                var countAfter = storage.Count;
-
-                Logger.WriteLine("Applied hotfixes to table " + name + ", count before = " + countBefore + ", after = " + countAfter);
+                Logger.WriteLine("Applied hotfixes to table " + name);
             }
             
             return storage;
