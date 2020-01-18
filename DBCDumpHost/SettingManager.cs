@@ -7,6 +7,7 @@ namespace DBCDumpHost
     {
         public static string definitionDir;
         public static string dbcDir;
+        public static string cascToolHost;
 
         static SettingManager()
         {
@@ -18,6 +19,7 @@ namespace DBCDumpHost
             var config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("config.json", optional: false, reloadOnChange: false).Build();
             definitionDir = config.GetSection("config")["definitionsdir"];
             dbcDir = config.GetSection("config")["dbcdir"];
+            cascToolHost = config.GetSection("config")["cascToolHost"];
         }
     }
 }

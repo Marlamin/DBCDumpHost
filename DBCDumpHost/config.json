@@ -2,5 +2,6 @@
     "config": {
         "dbcdir": "Z:/DBCs",
         "definitionsdir": "../WoWDBDefs/definitions"
+        "cascToolHost":  "https://wow.tools"
     }
 }

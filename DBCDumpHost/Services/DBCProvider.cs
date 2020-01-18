@@ -1,6 +1,7 @@
 ﻿using DBCD.Providers;
 using System;
 using System.IO;
+using System.Net.Http;
 
 namespace DBCDumpHost.Services
 {
@@ -8,19 +9,30 @@ namespace DBCDumpHost.Services
     {
         public Stream StreamForTableName(string tableName, string build)
         {
-            string filename = GetDBCFile(tableName, build);
-            return new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        }
-
-        private string GetDBCFile(string tableName, string build)
-        {
             if (tableName.Contains("."))
                 throw new Exception("Invalid DBC name!");
 
             if (string.IsNullOrEmpty(build))
                 throw new Exception("No build given!");
 
-            // Find file
+            var ms = new MemoryStream();
+            // Try CASC webservice
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName="+ tableName + "&fullBuild=" + build).Result;
+                    output.CopyTo(ms);
+                    ms.Position = 0;
+                    return ms;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unable to retrieve DB2 from web CASC backend: " + e.Message);
+            }
+
+            // Fall back to finding an on-disk version
             string fileName = Path.Combine(SettingManager.dbcDir, build, "dbfilesclient", $"{tableName}.db2");
 
             // if the db2 variant doesn't exist try dbc
@@ -33,7 +45,7 @@ namespace DBCDumpHost.Services
                     throw new FileNotFoundException($"Unable to find {tableName}");
             }
 
-            return fileName;
+            return new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
     }
 }
