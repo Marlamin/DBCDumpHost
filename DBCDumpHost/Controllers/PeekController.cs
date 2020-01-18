@@ -34,9 +34,9 @@ namespace DBCDumpHost.Controllers
 
         // GET: peek/name
         [HttpGet("{name}")]
-        public PeekResult Get(string name, string build, string col, int val, bool useHotfixes = false)
+        public PeekResult Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true)
         {
-            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ") value " + val);
+            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
 
             var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
 
@@ -50,44 +50,87 @@ namespace DBCDumpHost.Controllers
 
             var offset = 0;
             var recordFound = false;
-            foreach (DBCDRow item in storage.Values)
+
+            if(!calcOffset && col == "ID")
             {
-                if (recordFound)
-                    continue;
-
-                offset++;
-
-                for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                if (storage.ContainsKey(val))
                 {
-                    string fieldName = storage.AvailableColumns[i];
+                    var row = storage[val];
 
-                    if (fieldName != col)
-                        continue;
-
-                    var field = item[fieldName];
-
-                    // Don't think FKs to arrays are possible, so only check regular value
-                    if (field.ToString() == val.ToString())
+                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                     {
-                        for (var j = 0; j < storage.AvailableColumns.Length; ++j)
-                        {
-                            string subfieldName = storage.AvailableColumns[j];
-                            var subfield = item[subfieldName];
+                        string fieldName = storage.AvailableColumns[i];
 
-                            if (subfield is Array a)
+                        if (fieldName != col)
+                            continue;
+
+                        var field = row[fieldName];
+
+                        // Don't think FKs to arrays are possible, so only check regular value
+                        if (field.ToString() == val.ToString())
+                        {
+                            for (var j = 0; j < storage.AvailableColumns.Length; ++j)
                             {
-                                for (var k = 0; k < a.Length; k++)
+                                string subfieldName = storage.AvailableColumns[j];
+                                var subfield = row[subfieldName];
+
+                                if (subfield is Array a)
                                 {
-                                    result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
+                                    for (var k = 0; k < a.Length; k++)
+                                    {
+                                        result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
+                                    }
+                                }
+                                else
+                                {
+                                    result.values.Add((subfieldName, subfield.ToString()));
                                 }
                             }
-                            else
-                            {
-                                result.values.Add((subfieldName, subfield.ToString()));
-                            }
                         }
+                    }
+                }
+            }
+            else
+            {
+                foreach (DBCDRow row in storage.Values)
+                {
+                    if (recordFound)
+                        continue;
 
-                        recordFound = true;
+                    offset++;
+
+                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    {
+                        string fieldName = storage.AvailableColumns[i];
+
+                        if (fieldName != col)
+                            continue;
+
+                        var field = row[fieldName];
+
+                        // Don't think FKs to arrays are possible, so only check regular value
+                        if (field.ToString() == val.ToString())
+                        {
+                            for (var j = 0; j < storage.AvailableColumns.Length; ++j)
+                            {
+                                string subfieldName = storage.AvailableColumns[j];
+                                var subfield = row[subfieldName];
+
+                                if (subfield is Array a)
+                                {
+                                    for (var k = 0; k < a.Length; k++)
+                                    {
+                                        result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
+                                    }
+                                }
+                                else
+                                {
+                                    result.values.Add((subfieldName, subfield.ToString()));
+                                }
+                            }
+
+                            recordFound = true;
+                        }
                     }
                 }
             }
