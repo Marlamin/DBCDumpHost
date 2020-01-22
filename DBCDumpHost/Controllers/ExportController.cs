@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
 {
@@ -23,12 +24,12 @@ namespace DBCDumpHost.Controllers
         [Route("")]
         [Route("csv")]
         [HttpGet]
-        public ActionResult ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true)
+        public async Task<ActionResult> ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true)
         {
             Logger.WriteLine("Exporting DBC " + name + " for build " + build);
             try
             {
-                var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
+                var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
                 if (!storage.Values.Any())
                 {
                     throw new Exception("No rows found!");

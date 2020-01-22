@@ -8,6 +8,6 @@ namespace DBCDumpHost.Services
 {
     public interface IDBCManager
     {
-        IDBCDStorage GetOrLoad(string name, string build);
+        Task<IDBCDStorage> GetOrLoad(string name, string build);
     }
 }

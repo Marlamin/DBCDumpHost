@@ -23,14 +23,14 @@ namespace DBCDumpHost.Controllers
         }
 
         [HttpGet]
-        public string Get(string name, string build, bool useHotfixes = false)
+        public async Task<string> Get(string name, string build, bool useHotfixes = false)
         {
             if(name == null || build == null)
             {
                 return "Not enough variables";
             }
 
-            var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
+            var storage =  await dbcManager.GetOrLoad(name, build, useHotfixes);
             if (!storage.Values.Any())
             {
                 throw new Exception("No rows found!");

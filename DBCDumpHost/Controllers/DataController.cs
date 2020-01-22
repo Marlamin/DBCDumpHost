@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
 {
@@ -40,13 +41,13 @@ namespace DBCDumpHost.Controllers
 
         // GET/POST: data/name
         [HttpGet("{name}"), HttpPost("{name}")]
-        public DataTablesResult Get(string name, string build, int draw, int start, int length, bool useHotfixes = false)
+        public async Task<DataTablesResult> Get(string name, string build, int draw, int start, int length, bool useHotfixes = false)
         {
             var searching = false;
 
             var parameters = new Dictionary<string, string>();
 
-            if(Request.Method == "POST")
+            if (Request.Method == "POST")
             {
                 // POST, what site uses
                 foreach (var post in Request.Form)
@@ -96,9 +97,9 @@ namespace DBCDumpHost.Controllers
 
             try
             {
-                var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
+                var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
 
-                if(storage == null)
+                if (storage == null)
                 {
                     throw new Exception("Definitions for this DB/version combo not found in definition cache!");
                 }
@@ -111,7 +112,7 @@ namespace DBCDumpHost.Controllers
                 var filters = new Dictionary<int, (string, bool)>();
 
                 var siteColIndex = 0;
-                if(storage.Values.Count > 0)
+                if (storage.Values.Count > 0)
                 {
                     DBCDRow firstItem = storage.Values.First();
 
@@ -127,7 +128,7 @@ namespace DBCDumpHost.Controllers
                                     var searchVal = parameters["columns[" + siteColIndex + "][search][value]"];
                                     searching = true;
                                     filtering = true;
-                                    if(searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
+                                    if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
                                     {
                                         filters.Add(siteColIndex, (searchVal.Remove(0, 6), true));
                                     }

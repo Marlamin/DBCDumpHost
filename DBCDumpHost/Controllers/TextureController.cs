@@ -2,6 +2,7 @@
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
 {
@@ -27,15 +28,15 @@ namespace DBCDumpHost.Controllers
 
         // GET: data/name
         [HttpGet("{filedataid}")]
-        public Dictionary<uint, List<uint>> Get(int filedataid, string build)
+        public async Task<Dictionary<uint, List<uint>>> Get(int filedataid, string build)
         {
             Logger.WriteLine("Serving texture lookup for filedataid " + filedataid + " build " + build);
 
-            var modelFileData = dbcManager.GetOrLoad("modelfiledata", build);
-            var itemDisplayInfo = dbcManager.GetOrLoad("itemdisplayinfo", build);
-            var textureFileData = dbcManager.GetOrLoad("texturefiledata", build);
-            var creatureModelData = dbcManager.GetOrLoad("creaturemodeldata", build);
-            var creatureDisplayInfo = dbcManager.GetOrLoad("creaturedisplayinfo", build);
+            var modelFileData = await dbcManager.GetOrLoad("modelfiledata", build);
+            var itemDisplayInfo = await dbcManager.GetOrLoad("itemdisplayinfo", build);
+            var textureFileData = await dbcManager.GetOrLoad("texturefiledata", build);
+            var creatureModelData = await dbcManager.GetOrLoad("creaturemodeldata", build);
+            var creatureDisplayInfo = await dbcManager.GetOrLoad("creaturedisplayinfo", build);
 
             var returnList = new Dictionary<uint, List<uint>>();
 

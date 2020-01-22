@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
 {
@@ -34,11 +35,11 @@ namespace DBCDumpHost.Controllers
 
         // GET: peek/name
         [HttpGet("{name}")]
-        public PeekResult Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true)
+        public async Task<PeekResult> Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true)
         {
             Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
 
-            var storage = dbcManager.GetOrLoad(name, build, useHotfixes);
+            var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
 
             var result = new PeekResult();
             result.values = new List<(string, string)>();

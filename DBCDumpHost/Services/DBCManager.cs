@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using DBCD;
+﻿using DBCD;
 using DBCD.Providers;
 using DBCDumpHost.Utils;
-using DBFileReaderLib;
 using Microsoft.Extensions.Caching.Memory;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Services
 {
@@ -18,9 +15,7 @@ namespace DBCDumpHost.Services
         private readonly DBCProvider dbcProvider;
 
         private MemoryCache Cache;
-        private MemoryCache HotfixCache;
-        private ConcurrentDictionary<(string, string), SemaphoreSlim> Locks;
-        private ConcurrentDictionary<(string, string), SemaphoreSlim> HotfixLocks;
+        private ConcurrentDictionary<(string, string, bool), SemaphoreSlim> Locks;
 
         public DBCManager(IDBDProvider dbdProvider, IDBCProvider dbcProvider)
         {
@@ -28,41 +23,30 @@ namespace DBCDumpHost.Services
             this.dbcProvider = dbcProvider as DBCProvider;
 
             Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
-            HotfixCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 50 });
-            Locks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
-            HotfixLocks = new ConcurrentDictionary<(string, string), SemaphoreSlim>();
+            Locks = new ConcurrentDictionary<(string, string, bool), SemaphoreSlim>();
         }
 
-        public IDBCDStorage GetOrLoad(string name, string build)
+        public async Task<IDBCDStorage> GetOrLoad(string name, string build)
         {
-            return GetOrLoad(name, build, false);
+            return await GetOrLoad(name, build, false);
         }
 
-        public IDBCDStorage GetOrLoad(string name, string build, bool useHotfixes = false)
+        public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false)
         {
-            ref ConcurrentDictionary<(string, string), SemaphoreSlim> targetLocks = ref Locks;
-            ref MemoryCache targetCache = ref Cache;
-
-            if (useHotfixes)
+            if (!Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC))
             {
-                targetCache = ref HotfixCache;
-                targetLocks = ref HotfixLocks;
-            }
+                SemaphoreSlim mylock = Locks.GetOrAdd((name, build, useHotfixes), k => new SemaphoreSlim(1, 1));
 
-            if (!targetCache.TryGetValue((name, build), out IDBCDStorage cachedDBC))
-            {
-                SemaphoreSlim mylock = targetLocks.GetOrAdd((name, build), k => new SemaphoreSlim(1, 1));
-
-                mylock.Wait();
+                await mylock.WaitAsync();
 
                 try
                 {
-                    if (!targetCache.TryGetValue((name, build), out cachedDBC))
+                    if (!Cache.TryGetValue((name, build, useHotfixes), out cachedDBC))
                     {
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
                         cachedDBC = LoadDBC(name, build, useHotfixes);
-                        targetCache.Set((name, build), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+                        Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
                 finally
@@ -89,10 +73,10 @@ namespace DBCDumpHost.Services
 
             if (useHotfixes)
             {
-                if(!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                if (!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
                     HotfixManager.LoadCaches(buildNumber);
 
-                if(HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                if (HotfixManager.hotfixReaders.ContainsKey(buildNumber))
                     storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
             }
 
@@ -107,8 +91,9 @@ namespace DBCDumpHost.Services
 
         public void ClearHotfixCache()
         {
-            HotfixCache.Dispose();
-            HotfixCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 50 });
+            // TODO: Only clear hotfix caches? :(
+            Cache.Dispose();
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
         }
     }
 }

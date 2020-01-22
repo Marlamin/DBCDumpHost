@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
 {
@@ -40,14 +41,14 @@ namespace DBCDumpHost.Controllers
 
         // GET: api/DBC/name
         [HttpGet("{name}")]
-        public HeaderResult Get(string name, string build)
+        public async Task<HeaderResult> Get(string name, string build)
         {
             Logger.WriteLine("Serving headers for " + name + " (" + build + ")");
 
             var result = new HeaderResult();
             try
             {
-                var storage = dbcManager.GetOrLoad(name, build);
+                var storage = await dbcManager.GetOrLoad(name, build);
 
                 if (!dbdProvider.TryGetDefinition(name, out var definition))
                 {
