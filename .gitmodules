@@ -1,6 +1,6 @@
 [submodule "DBDiffer"]
 	path = DBDiffer
-	url = https://github.com/barncastle/DBDiffer
+	url = https://github.com/Marlamin/DBDiffer
 [submodule "DBCD"]
 	path = DBCD
 	url = https://github.com/wowdev/DBCD.git

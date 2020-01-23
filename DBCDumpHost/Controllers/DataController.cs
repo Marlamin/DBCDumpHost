@@ -16,11 +16,11 @@ namespace DBCDumpHost.Controllers
     {
         public struct DataTablesResult
         {
-            public int draw;
-            public int recordsFiltered;
-            public int recordsTotal;
-            public List<List<string>> data;
-            public string error;
+            public int draw { get; set; }
+            public int recordsFiltered { get; set; }
+            public int recordsTotal { get; set; }
+            public List<List<string>> data { get; set; }
+            public string error { get; set; }
         }
 
         private readonly DBDProvider dbdProvider;

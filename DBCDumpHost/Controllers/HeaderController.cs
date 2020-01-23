@@ -16,10 +16,10 @@ namespace DBCDumpHost.Controllers
     {
         public struct HeaderResult
         {
-            public List<string> headers;
-            public Dictionary<string, string> fks;
-            public Dictionary<string, string> comments;
-            public string error;
+            public List<string> headers { get; set; }
+            public Dictionary<string, string> fks { get; set; }
+            public Dictionary<string, string> comments { get; set; }
+            public string error { get; set; }
         }
 
         private readonly DBCManager dbcManager;

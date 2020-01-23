@@ -28,7 +28,7 @@ namespace DBCDumpHost.Controllers
 
         // GET: data/name
         [HttpGet("{filedataid}")]
-        public async Task<Dictionary<uint, List<uint>>> Get(int filedataid, string build)
+        public async Task<Dictionary<string, List<uint>>> Get(int filedataid, string build)
         {
             Logger.WriteLine("Serving texture lookup for filedataid " + filedataid + " build " + build);
 
@@ -38,7 +38,7 @@ namespace DBCDumpHost.Controllers
             var creatureModelData = await dbcManager.GetOrLoad("creaturemodeldata", build);
             var creatureDisplayInfo = await dbcManager.GetOrLoad("creaturedisplayinfo", build);
 
-            var returnList = new Dictionary<uint, List<uint>>();
+            var returnList = new Dictionary<string, List<uint>>();
 
             if (modelFileData.ContainsKey(filedataid))
             {
@@ -61,7 +61,7 @@ namespace DBCDumpHost.Controllers
                         }
                     }
 
-                    returnList.Add((uint)idiEntry.ID, textureFileDataList);
+                    returnList.Add(idiEntry.ID.ToString(), textureFileDataList);
                 }
 
                 foreach (dynamic cmdEntry in creatureModelData.Values)
@@ -78,7 +78,7 @@ namespace DBCDumpHost.Controllers
                             continue;
                         }
 
-                        returnList.Add((uint)cdiEntry.ID, new List<uint> { (uint)cdiEntry.TextureVariationFileDataID[0], (uint)cdiEntry.TextureVariationFileDataID[1], (uint)cdiEntry.TextureVariationFileDataID[2] });
+                        returnList.Add(cdiEntry.ID.ToString(), new List<uint> { (uint)cdiEntry.TextureVariationFileDataID[0], (uint)cdiEntry.TextureVariationFileDataID[1], (uint)cdiEntry.TextureVariationFileDataID[2] });
                     }
 
                     break;

@@ -22,8 +22,8 @@ namespace DBCDumpHost.Controllers
 
         public struct PeekResult
         {
-            public List<(string, string)> values;
-            public int offset;
+            public Dictionary<string, string> values { get; set; }
+            public int offset { get; set; }
         }
 
         // GET: peek/
@@ -42,7 +42,7 @@ namespace DBCDumpHost.Controllers
             var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
 
             var result = new PeekResult();
-            result.values = new List<(string, string)>();
+            result.values = new Dictionary<string, string>();
 
             if (!storage.Values.Any())
             {
@@ -79,12 +79,12 @@ namespace DBCDumpHost.Controllers
                                 {
                                     for (var k = 0; k < a.Length; k++)
                                     {
-                                        result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
+                                        result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
                                     }
                                 }
                                 else
                                 {
-                                    result.values.Add((subfieldName, subfield.ToString()));
+                                    result.values.Add(subfieldName, subfield.ToString());
                                 }
                             }
                         }
@@ -121,12 +121,12 @@ namespace DBCDumpHost.Controllers
                                 {
                                     for (var k = 0; k < a.Length; k++)
                                     {
-                                        result.values.Add((subfieldName + "[" + k + "]", a.GetValue(k).ToString()));
+                                        result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
                                     }
                                 }
                                 else
                                 {
-                                    result.values.Add((subfieldName, subfield.ToString()));
+                                    result.values.Add(subfieldName, subfield.ToString());
                                 }
                             }
 
