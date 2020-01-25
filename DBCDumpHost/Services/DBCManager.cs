@@ -1,5 +1,6 @@
 ﻿using DBCD;
 using DBCD.Providers;
+using DBCDumpHost.Controllers;
 using DBCDumpHost.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using System;
@@ -31,7 +32,7 @@ namespace DBCDumpHost.Services
             return await GetOrLoad(name, build, false);
         }
 
-        public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false)
+        public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             if (!Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC))
             {
@@ -46,7 +47,12 @@ namespace DBCDumpHost.Services
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
                         cachedDBC = LoadDBC(name, build, useHotfixes);
-                        Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+
+                        // Only cache non-specific locale DB2s for now
+                        if(locale == LocaleFlags.All_WoW)
+                        {
+                            Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
+                        }
                     }
                 }
                 finally
