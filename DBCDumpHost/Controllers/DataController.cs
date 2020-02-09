@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
@@ -109,7 +110,7 @@ namespace DBCDumpHost.Controllers
                 result.data = new List<List<string>>();
 
                 var filtering = false;
-                var filters = new Dictionary<int, (string, bool)>();
+                var filters = new Dictionary<int, string>();
 
                 var siteColIndex = 0;
                 if (storage.Values.Count > 0)
@@ -130,11 +131,15 @@ namespace DBCDumpHost.Controllers
                                     filtering = true;
                                     if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
                                     {
-                                        filters.Add(siteColIndex, (searchVal.Remove(0, 6), true));
+                                        filters.Add(siteColIndex, "^" + searchVal.Remove(0, 6) + "$");
+                                    }
+                                    else if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "regex:")
+                                    {
+                                        filters.Add(siteColIndex, searchVal.Remove(0, 6));
                                     }
                                     else
                                     {
-                                        filters.Add(siteColIndex, (searchVal, false));
+                                        filters.Add(siteColIndex, searchVal);
                                     }
                                 }
 
@@ -150,11 +155,15 @@ namespace DBCDumpHost.Controllers
                                 filtering = true;
                                 if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
                                 {
-                                    filters.Add(siteColIndex, (searchVal.Remove(0, 6), true));
+                                    filters.Add(siteColIndex, "^" + searchVal.Remove(0, 6) + "$");
+                                }
+                                else if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "regex:")
+                                {
+                                    filters.Add(siteColIndex, searchVal.Remove(0, 6));
                                 }
                                 else
                                 {
-                                    filters.Add(siteColIndex, (searchVal, false));
+                                    filters.Add(siteColIndex, searchVal);
                                 }
                             }
 
@@ -187,27 +196,13 @@ namespace DBCDumpHost.Controllers
                                     {
                                         if (filters.ContainsKey(siteColIndex))
                                         {
-                                            if (filters[siteColIndex].Item2)
+                                            if (Regex.IsMatch(val, filters[siteColIndex]))
                                             {
-                                                if (val == filters[siteColIndex].Item1)
-                                                {
-                                                    matches = true;
-                                                }
-                                                else
-                                                {
-                                                    allMatch = false;
-                                                }
+                                                matches = true;
                                             }
                                             else
                                             {
-                                                if (val.Contains(filters[siteColIndex].Item1, StringComparison.InvariantCultureIgnoreCase))
-                                                {
-                                                    matches = true;
-                                                }
-                                                else
-                                                {
-                                                    allMatch = false;
-                                                }
+                                                allMatch = false;
                                             }
                                         }
                                     }
@@ -234,27 +229,13 @@ namespace DBCDumpHost.Controllers
                                 {
                                     if (filters.ContainsKey(siteColIndex))
                                     {
-                                        if (filters[siteColIndex].Item2)
+                                        if (Regex.IsMatch(val, filters[siteColIndex]))
                                         {
-                                            if (val == filters[siteColIndex].Item1)
-                                            {
-                                                matches = true;
-                                            }
-                                            else
-                                            {
-                                                allMatch = false;
-                                            }
+                                            matches = true;
                                         }
                                         else
                                         {
-                                            if (val.Contains(filters[siteColIndex].Item1, StringComparison.InvariantCultureIgnoreCase))
-                                            {
-                                                matches = true;
-                                            }
-                                            else
-                                            {
-                                                allMatch = false;
-                                            }
+                                            allMatch = false;
                                         }
                                     }
                                 }
