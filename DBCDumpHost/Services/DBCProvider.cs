@@ -1,4 +1,5 @@
 ﻿using DBCD.Providers;
+using DBCDumpHost.Controllers;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -7,6 +8,8 @@ namespace DBCDumpHost.Services
 {
     public class DBCProvider : IDBCProvider
     {
+        public LocaleFlags localeFlags = LocaleFlags.All_WoW;
+
         public Stream StreamForTableName(string tableName, string build)
         {
             if (tableName.Contains("."))
@@ -21,7 +24,7 @@ namespace DBCDumpHost.Services
             {
                 using (var client = new HttpClient())
                 {
-                    var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName="+ tableName + "&fullBuild=" + build).Result;
+                    var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName="+ tableName + "&fullBuild=" + build + "&locale=" + localeFlags).Result;
                     output.CopyTo(ms);
                     ms.Position = 0;
                     return ms;

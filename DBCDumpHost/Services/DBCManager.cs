@@ -34,6 +34,11 @@ namespace DBCDumpHost.Services
 
         public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
+            if (locale != LocaleFlags.All_WoW)
+            {
+                return LoadDBC(name, build, useHotfixes, locale);
+            }
+
             if (!Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC))
             {
                 SemaphoreSlim mylock = Locks.GetOrAdd((name, build, useHotfixes), k => new SemaphoreSlim(1, 1));
@@ -46,13 +51,8 @@ namespace DBCDumpHost.Services
                     {
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
-                        cachedDBC = LoadDBC(name, build, useHotfixes);
-
-                        // Only cache non-specific locale DB2s for now
-                        if(locale == LocaleFlags.All_WoW)
-                        {
-                            Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
-                        }
+                        cachedDBC = LoadDBC(name, build, useHotfixes, locale);
+                        Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
                 finally
@@ -64,10 +64,18 @@ namespace DBCDumpHost.Services
             return cachedDBC;
         }
 
-        private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false)
+        private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
+            if(locale != LocaleFlags.All_WoW)
+            {
+                dbcProvider.localeFlags = locale;
+            }
+
             var dbcd = new DBCD.DBCD(dbcProvider, dbdProvider);
             var storage = dbcd.Load(name, build);
+
+            dbcProvider.localeFlags = LocaleFlags.All_WoW;
+
             var splitBuild = build.Split('.');
 
             if (splitBuild.Length != 4)
