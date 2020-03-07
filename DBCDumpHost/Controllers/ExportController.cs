@@ -24,12 +24,12 @@ namespace DBCDumpHost.Controllers
         [Route("")]
         [Route("csv")]
         [HttpGet]
-        public async Task<ActionResult> ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true)
+        public async Task<ActionResult> ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            Logger.WriteLine("Exporting DBC " + name + " for build " + build);
+            Logger.WriteLine("Exporting DBC " + name + " for build " + build + " and locale " + locale);
             try
             {
-                var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
+                var storage = await dbcManager.GetOrLoad(name, build, useHotfixes, locale);
                 if (!storage.Values.Any())
                 {
                     throw new Exception("No rows found!");
