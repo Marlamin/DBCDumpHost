@@ -79,7 +79,7 @@ namespace DBCDumpHost.Controllers
                 parameters.Add("search[value]", "");
             }
 
-            var searchValue = parameters["search[value]"];
+            var searchValue = parameters["search[value]"].Trim();
 
             if (string.IsNullOrWhiteSpace(searchValue))
             {
