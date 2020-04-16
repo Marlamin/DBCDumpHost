@@ -19,6 +19,7 @@ namespace DBCDumpHost.Controllers
             public List<string> headers { get; set; }
             public Dictionary<string, string> fks { get; set; }
             public Dictionary<string, string> comments { get; set; }
+            public List<string> unverifieds { get; set; }
             public string error { get; set; }
         }
 
@@ -58,6 +59,7 @@ namespace DBCDumpHost.Controllers
                 result.headers = new List<string>();
                 result.fks = new Dictionary<string, string>();
                 result.comments = new Dictionary<string, string>();
+                result.unverifieds = new List<string>();
 
                 if (!storage.Values.Any())
                 {
@@ -76,6 +78,11 @@ namespace DBCDumpHost.Controllers
                             if (columnDef.comment != null)
                             {
                                 result.comments.Add(fieldName, columnDef.comment);
+                            }
+
+                            if (!columnDef.verified)
+                            {
+                                result.unverifieds.Add(fieldName);
                             }
                         }
                     }
@@ -106,6 +113,11 @@ namespace DBCDumpHost.Controllers
                                         {
                                             result.comments.Add($"{fieldName}[{i}]", columnDef.comment);
                                         }
+
+                                        if (!columnDef.verified)
+                                        {
+                                            result.unverifieds.Add($"{fieldName}[{i}]");
+                                        }
                                     }
                                 }
                             }
@@ -123,6 +135,11 @@ namespace DBCDumpHost.Controllers
                                     if (columnDef.comment != null)
                                     {
                                         result.comments.Add(fieldName, columnDef.comment);
+                                    }
+
+                                    if (!columnDef.verified)
+                                    {
+                                        result.unverifieds.Add(fieldName);
                                     }
                                 }
                             }
