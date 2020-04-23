@@ -5,6 +5,7 @@ using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -110,7 +111,7 @@ namespace DBCDumpHost.Controllers
                 result.data = new List<List<string>>();
 
                 var filtering = false;
-                var filters = new Dictionary<int, string>();
+                var filters = new Dictionary<int, Predicate<object>>();
 
                 var siteColIndex = 0;
                 if (storage.Values.Count > 0)
@@ -126,21 +127,10 @@ namespace DBCDumpHost.Controllers
                             {
                                 if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
                                 {
-                                    var searchVal = parameters["columns[" + siteColIndex + "][search][value]"];
+                                    var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
                                     searching = true;
                                     filtering = true;
-                                    if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
-                                    {
-                                        filters.Add(siteColIndex, "^" + searchVal.Remove(0, 6) + "$");
-                                    }
-                                    else if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "regex:")
-                                    {
-                                        filters.Add(siteColIndex, searchVal.Remove(0, 6));
-                                    }
-                                    else
-                                    {
-                                        filters.Add(siteColIndex, searchVal);
-                                    }
+                                    filters.Add(siteColIndex, CreateFilterPredicate(filterVal));
                                 }
 
                                 siteColIndex++;
@@ -150,21 +140,10 @@ namespace DBCDumpHost.Controllers
                         {
                             if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
                             {
-                                var searchVal = parameters["columns[" + siteColIndex + "][search][value]"];
+                                var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
                                 searching = true;
                                 filtering = true;
-                                if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "exact:")
-                                {
-                                    filters.Add(siteColIndex, "^" + searchVal.Remove(0, 6) + "$");
-                                }
-                                else if (searchVal.Length > 6 && searchVal.Substring(0, 6) == "regex:")
-                                {
-                                    filters.Add(siteColIndex, searchVal.Remove(0, 6));
-                                }
-                                else
-                                {
-                                    filters.Add(siteColIndex, searchVal);
-                                }
+                                filters.Add(siteColIndex, CreateFilterPredicate(filterVal));
                             }
 
                             siteColIndex++;
@@ -196,7 +175,7 @@ namespace DBCDumpHost.Controllers
                                     {
                                         if (filters.ContainsKey(siteColIndex))
                                         {
-                                            if (Regex.IsMatch(val, filters[siteColIndex]))
+                                            if (filters[siteColIndex](a.GetValue(j)))
                                             {
                                                 matches = true;
                                             }
@@ -229,7 +208,7 @@ namespace DBCDumpHost.Controllers
                                 {
                                     if (filters.ContainsKey(siteColIndex))
                                     {
-                                        if (Regex.IsMatch(val, filters[siteColIndex]))
+                                        if (filters[siteColIndex](field))
                                         {
                                             matches = true;
                                         }
@@ -285,6 +264,44 @@ namespace DBCDumpHost.Controllers
             }
 
             return result;
+        }
+
+        private static Predicate<object> CreateFilterPredicate(String filterVal)
+        {
+            if (filterVal.StartsWith("exact:"))
+            {
+                return CreateRegexPredicate("^" + filterVal.Remove(0, 6) + "$");
+            }
+            else if (filterVal.StartsWith("regex:"))
+            {
+                return CreateRegexPredicate(filterVal.Remove(0, 6));
+            }
+            else if (filterVal.StartsWith("0x"))
+            {
+                UInt64 flags;
+                if (UInt64.TryParse(filterVal.Remove(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out flags))
+                {
+                    return CreateFlagsPredicate(flags);
+                }
+            }
+
+            // Fallback logic is kept outside of an `else` branch to permit invalid filter recovery.
+            return CreateRegexPredicate(filterVal);
+        }
+
+        private static Predicate<object> CreateRegexPredicate(String pattern)
+        {
+            var re = new Regex(pattern);
+            return (field) => re.IsMatch(field.ToString());
+        }
+
+        private static Predicate<object> CreateFlagsPredicate(UInt64 flags)
+        {
+            return (field) =>
+            {
+                var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
+                return (num & flags) == flags;
+            };
         }
     }
 
