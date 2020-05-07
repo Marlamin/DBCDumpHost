@@ -193,9 +193,7 @@ namespace DBCDumpHost.Controllers
                                 }
 
                                 val = System.Web.HttpUtility.HtmlEncode(val);
-
                                 rowList.Add(val);
-
                                 siteColIndex++;
                             }
                         }
@@ -226,7 +224,6 @@ namespace DBCDumpHost.Controllers
                             }
 
                             val = System.Web.HttpUtility.HtmlEncode(val);
-
                             rowList.Add(val);
                             siteColIndex++;
                         }
