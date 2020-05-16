@@ -275,8 +275,7 @@ namespace DBCDumpHost.Controllers
             }
             else if (filterVal.StartsWith("0x"))
             {
-                UInt64 flags;
-                if (UInt64.TryParse(filterVal.Remove(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out flags))
+                if (ulong.TryParse(filterVal.Remove(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong flags))
                 {
                     return CreateFlagsPredicate(flags);
                 }
@@ -286,16 +285,21 @@ namespace DBCDumpHost.Controllers
             return CreateRegexPredicate(filterVal);
         }
 
-        private static Predicate<object> CreateRegexPredicate(String pattern)
+        private static Predicate<object> CreateRegexPredicate(string pattern)
         {
             var re = new Regex(pattern);
             return (field) => re.IsMatch(field.ToString());
         }
 
-        private static Predicate<object> CreateFlagsPredicate(UInt64 flags)
+        private static Predicate<object> CreateFlagsPredicate(ulong flags)
         {
             return (field) =>
             {
+                if(field is int)
+                {
+                    field = BitConverter.ToUInt32(BitConverter.GetBytes((int)field));
+                }
+                
                 var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
                 return (num & flags) == flags;
             };
