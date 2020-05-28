@@ -46,6 +46,11 @@ namespace DBCDumpHost.Controllers
         public async Task<DataTablesResult> Get(string name, string build, int draw, int start, int length, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             var searching = false;
+            var sorting = false;
+            var sortBySiteCol = 0;
+            var sortByName = "";
+            var sortDesc = "";
+            var sortByArrayKey = 0;
 
             var parameters = new Dictionary<string, string>();
 
@@ -92,6 +97,13 @@ namespace DBCDumpHost.Controllers
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with search " + searchValue);
             }
 
+            if (parameters.ContainsKey("order[0][column]"))
+            {
+                sorting = true;
+                sortBySiteCol = int.Parse(parameters["order[0][column]"]);
+                sortDesc = parameters["order[0][dir]"];
+            }
+
             var result = new DataTablesResult
             {
                 draw = draw
@@ -103,7 +115,7 @@ namespace DBCDumpHost.Controllers
 
                 if (storage == null)
                 {
-                    throw new Exception("Definitions for this DB/version combo not found in definition cache!");
+                    throw new Exception("Definitions for this DB and version combination not found in definition cache!");
                 }
 
                 result.recordsTotal = storage.Values.Count();
@@ -114,6 +126,7 @@ namespace DBCDumpHost.Controllers
                 var filters = new Dictionary<int, Predicate<object>>();
 
                 var siteColIndex = 0;
+
                 if (storage.Values.Count > 0)
                 {
                     DBCDRow firstItem = storage.Values.First();
@@ -125,6 +138,12 @@ namespace DBCDumpHost.Controllers
                         {
                             for (var j = 0; j < a.Length; j++)
                             {
+                                if (sorting && sortBySiteCol == siteColIndex)
+                                {
+                                    sortByName = storage.AvailableColumns[i];
+                                    sortByArrayKey = j;
+                                }
+
                                 if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
                                 {
                                     var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
@@ -138,6 +157,11 @@ namespace DBCDumpHost.Controllers
                         }
                         else
                         {
+                            if (sorting && sortBySiteCol == siteColIndex)
+                            {
+                                sortByName = storage.AvailableColumns[i];
+                            }
+
                             if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
                             {
                                 var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
@@ -151,8 +175,23 @@ namespace DBCDumpHost.Controllers
                     }
                 }
 
+                var sorted = storage.Values.ToList();
+
+                // TODO: Support sorting by array fields (sortByArrayKey)
+                if(sorting && !string.IsNullOrWhiteSpace(sortByName) && !sortByName.EndsWith("]"))
+                {
+                    if(sortDesc == "asc")
+                    {
+                        sorted = sorted.OrderBy(row => row[sortByName]).ToList();
+                    }
+                    else
+                    {
+                        sorted = sorted.OrderByDescending(row => row[sortByName]).ToList();
+                    }
+                }
+
                 var resultCount = 0;
-                foreach (DBCDRow item in storage.Values)
+                foreach (DBCDRow item in sorted)
                 {
                     siteColIndex = 0;
 
