@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DBCDumpHost.Controllers
@@ -43,7 +44,7 @@ namespace DBCDumpHost.Controllers
 
         // GET/POST: data/name
         [HttpGet("{name}"), HttpPost("{name}")]
-        public async Task<DataTablesResult> Get(string name, string build, int draw, int start, int length, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
+        public async Task<DataTablesResult> Get(CancellationToken cancellationToken, string name, string build, int draw, int start, int length, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             var searching = false;
             var sorting = false;
@@ -111,6 +112,7 @@ namespace DBCDumpHost.Controllers
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var storage = await dbcManager.GetOrLoad(name, build, useHotfixes, locale);
 
                 if (storage == null)
@@ -193,6 +195,7 @@ namespace DBCDumpHost.Controllers
                 var resultCount = 0;
                 foreach (DBCDRow item in sorted)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     siteColIndex = 0;
 
                     var rowList = new List<string>();
