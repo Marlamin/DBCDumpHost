@@ -51,7 +51,7 @@ namespace DBCDumpHost.Services
                     {
                         // Key not in cache, load DBC
                         Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
-                        cachedDBC = LoadDBC(name, build, useHotfixes, locale);
+                        cachedDBC = LoadDBC(name, build, useHotfixes);
                         Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                     }
                 }
