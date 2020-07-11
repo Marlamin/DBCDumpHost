@@ -13,15 +13,13 @@ namespace DBCDumpHost.Services
     public class DBCManager : IDBCManager
     {
         private readonly DBDProvider dbdProvider;
-        private readonly DBCProvider dbcProvider;
 
         private MemoryCache Cache;
         private ConcurrentDictionary<(string, string, bool), SemaphoreSlim> Locks;
 
-        public DBCManager(IDBDProvider dbdProvider, IDBCProvider dbcProvider)
+        public DBCManager(IDBDProvider dbdProvider)
         {
             this.dbdProvider = dbdProvider as DBDProvider;
-            this.dbcProvider = dbcProvider as DBCProvider;
 
             Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
             Locks = new ConcurrentDictionary<(string, string, bool), SemaphoreSlim>();
@@ -66,7 +64,8 @@ namespace DBCDumpHost.Services
 
         private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            if(locale != LocaleFlags.All_WoW)
+            var dbcProvider = new DBCProvider();
+            if (locale != LocaleFlags.All_WoW)
             {
                 dbcProvider.localeFlags = locale;
             }
