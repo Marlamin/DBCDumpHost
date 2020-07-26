@@ -12,6 +12,7 @@ namespace DBCDumpHost.Services
     {
         private readonly DBDReader dbdReader;
         private Dictionary<string, (string FilePath, Structs.DBDefinition Definition)> definitionLookup;
+        private Dictionary<string, List<string>> relationshipMap;
 
         public DBDProvider()
         {
@@ -30,6 +31,32 @@ namespace DBCDumpHost.Services
             definitionLookup = definitionFiles.ToDictionary(x => Path.GetFileNameWithoutExtension(x), x => (x, dbdReader.Read(x)), StringComparer.OrdinalIgnoreCase);
 
             Logger.WriteLine("Loaded " + definitionLookup.Count + " definitions!");
+
+            Logger.WriteLine("Reloading relationship map");
+
+            relationshipMap = new Dictionary<string, List<string>>();
+
+            foreach(var definition in definitionLookup)
+            {
+                foreach(var column in definition.Value.Definition.columnDefinitions)
+                {
+                    if (column.Value.foreignTable == null)
+                        continue;
+
+                    var currentName = definition.Key + "::" + column.Key;
+                    var foreignName = column.Value.foreignTable + "::" + column.Value.foreignColumn;
+                    if (relationshipMap.ContainsKey(foreignName))
+                    {
+                        relationshipMap[foreignName].Add(currentName);
+                    }
+                    else
+                    {
+                        relationshipMap.Add(foreignName, new List<string>() { currentName });
+                    }
+                }
+            }
+
+            Logger.WriteLine("Reloaded relationship map: " + relationshipMap.Count + " relations");
 
             return definitionLookup.Count;
         }
@@ -54,6 +81,20 @@ namespace DBCDumpHost.Services
 
             definition = default(Structs.DBDefinition);
             return false;
+        }
+
+        public Dictionary<string, List<string>> GetAllRelations(){
+            return relationshipMap;
+        }
+
+        public List<string> GetRelationsToColumn(string foreignColumn)
+        {
+            if(!relationshipMap.TryGetValue(foreignColumn, out List<string> relations))
+            {
+                return new List<string>();
+            }
+
+            return relations;
         }
     }
 }

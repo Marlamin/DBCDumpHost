@@ -20,6 +20,8 @@ namespace DBCDumpHost.Controllers
             public Dictionary<string, string> fks { get; set; }
             public Dictionary<string, string> comments { get; set; }
             public List<string> unverifieds { get; set; }
+
+            public List<string> nonInlines { get; set; }
             public string error { get; set; }
         }
 
