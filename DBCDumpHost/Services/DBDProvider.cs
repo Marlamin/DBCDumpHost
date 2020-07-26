@@ -87,8 +87,22 @@ namespace DBCDumpHost.Services
             return relationshipMap;
         }
 
-        public List<string> GetRelationsToColumn(string foreignColumn)
+        public List<string> GetRelationsToColumn(string foreignColumn, bool fixCase = false)
         {
+            if (fixCase)
+            {
+                var splitCol = foreignColumn.Split("::");
+                if(splitCol.Length == 2)
+                {
+                    var results = definitionLookup.Where(x => x.Key.ToLower() == splitCol[0].ToLower()).Select(x => x.Key);
+                    if (results.Any())
+                    {
+                        splitCol[0] = results.First();
+                    }
+                }
+                foreignColumn = string.Join("::", splitCol);
+            }
+
             if(!relationshipMap.TryGetValue(foreignColumn, out List<string> relations))
             {
                 return new List<string>();

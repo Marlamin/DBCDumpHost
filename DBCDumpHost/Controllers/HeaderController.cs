@@ -21,7 +21,7 @@ namespace DBCDumpHost.Controllers
             public Dictionary<string, string> comments { get; set; }
             public List<string> unverifieds { get; set; }
 
-            public List<string> nonInlines { get; set; }
+            public Dictionary<string, List<string>> relationsToColumns { get; set; }
             public string error { get; set; }
         }
 
@@ -33,7 +33,6 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
             this.dbdProvider = dbdProvider as DBDProvider;
         }
-
 
         // GET: api/DBC
         [HttpGet]
@@ -148,6 +147,17 @@ namespace DBCDumpHost.Controllers
                         }
 
                         break;
+                    }
+                }
+
+                result.relationsToColumns = new Dictionary<string, List<string>>();
+
+                foreach(var column in result.headers)
+                {
+                    var relationsToCol = dbdProvider.GetRelationsToColumn(name + "::" + column, true);
+                    if(relationsToCol.Count > 0)
+                    {
+                        result.relationsToColumns.Add(column, relationsToCol);
                     }
                 }
             }
