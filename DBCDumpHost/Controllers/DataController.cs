@@ -177,25 +177,27 @@ namespace DBCDumpHost.Controllers
                     }
                 }
 
-                var sorted = storage.Values.ToList();
-
-                // TODO: Support sorting by array fields (sortByArrayKey)
+                List<DBCDRow> sorted;
                 if(sorting && !string.IsNullOrWhiteSpace(sortByName) && !sortByName.EndsWith("]"))
                 {
                     if(sortDesc == "asc")
                     {
                         if (sortByArrayKey.HasValue)
-                            sorted = sorted.OrderBy(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
+                            sorted = storage.Values.OrderBy(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
                         else
-                            sorted = sorted.OrderBy(row => row[sortByName]).ToList();
+                            sorted = storage.Values.OrderBy(row => row[sortByName]).ToList();
                     }
                     else
                     {
                         if (sortByArrayKey.HasValue)
-                            sorted = sorted.OrderByDescending(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
+                            sorted = storage.Values.OrderByDescending(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
                         else
-                            sorted = sorted.OrderByDescending(row => row[sortByName]).ToList();
+                            sorted = storage.Values.OrderByDescending(row => row[sortByName]).ToList();
                     }
+                }
+                else
+                {
+                    sorted = storage.Values.ToList();
                 }
 
                 var resultCount = 0;
@@ -345,7 +347,7 @@ namespace DBCDumpHost.Controllers
             {
                 if(field is int)
                 {
-                    field = BitConverter.ToUInt32(BitConverter.GetBytes((int)field));
+                    field = unchecked((uint)field);
                 }
 
                 var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
