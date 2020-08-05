@@ -51,7 +51,7 @@ namespace DBCDumpHost.Controllers
             var sortBySiteCol = 0;
             var sortByName = "";
             var sortDesc = "";
-            var sortByArrayKey = 0;
+            int? sortByArrayKey = null;
 
             var parameters = new Dictionary<string, string>();
 
@@ -184,11 +184,17 @@ namespace DBCDumpHost.Controllers
                 {
                     if(sortDesc == "asc")
                     {
-                        sorted = sorted.OrderBy(row => row[sortByName]).ToList();
+                        if (sortByArrayKey.HasValue)
+                            sorted = sorted.OrderBy(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
+                        else
+                            sorted = sorted.OrderBy(row => row[sortByName]).ToList();
                     }
                     else
                     {
-                        sorted = sorted.OrderByDescending(row => row[sortByName]).ToList();
+                        if (sortByArrayKey.HasValue)
+                            sorted = sorted.OrderByDescending(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
+                        else
+                            sorted = sorted.OrderByDescending(row => row[sortByName]).ToList();
                     }
                 }
 
@@ -341,7 +347,7 @@ namespace DBCDumpHost.Controllers
                 {
                     field = BitConverter.ToUInt32(BitConverter.GetBytes((int)field));
                 }
-                
+
                 var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
                 return (num & flags) == flags;
             };
