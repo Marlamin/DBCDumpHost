@@ -35,9 +35,9 @@ namespace DBCDumpHost.Utils
             Parameters = parameters;
             StringFormatter = stringFormatter;
 
-            InitaliseSort();
-            InitaliseSearch();
-            Initalise();
+            InitialiseSort();
+            InitialiseSearch();
+            Initialise();
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace DBCDumpHost.Utils
         /// <summary>
         /// Creates the Sort, Where and Converter functions from the provided parameters
         /// </summary>
-        private void Initalise()
+        private void Initialise()
         {
             var param = Expression.Parameter(typeof(DBCDRow), "row");
             var properties = new List<Expression>();
@@ -148,7 +148,7 @@ namespace DBCDumpHost.Utils
         /// Attempts to parse the sorted column and it's direction - if any
         /// </summary>
         /// <returns></returns>
-        private void InitaliseSort()
+        private void InitialiseSort()
         {
             SortBySiteCol = -1;
 
@@ -166,7 +166,7 @@ namespace DBCDumpHost.Utils
         /// Attempts to parse and normalise the search value - if any
         /// </summary>
         /// <returns></returns>
-        private void InitaliseSearch()
+        private void InitialiseSearch()
         {
             if (Parameters.TryGetValue("search[value]", out var searchValue) && !string.IsNullOrWhiteSpace(searchValue))
             {
@@ -174,9 +174,9 @@ namespace DBCDumpHost.Utils
 
                 // format the searchvalue so it matches in GetRecords
                 if (StringFormatter != null)
-                    SearchValue = StringFormatter(searchValue);
+                    SearchValue = StringFormatter(searchValue.Trim());
                 else
-                    SearchValue = searchValue;
+                    SearchValue = searchValue.Trim();
             }
             else
             {
