@@ -54,10 +54,8 @@ namespace DBCDumpHost.Controllers
 
             if(!calcOffset && col == "ID")
             {
-                if (storage.ContainsKey(val))
+                if (storage.TryGetValue(val, out DBCDRow row))
                 {
-                    var row = storage[val];
-
                     for (var i = 0; i < storage.AvailableColumns.Length; ++i)
                     {
                         string fieldName = storage.AvailableColumns[i];
