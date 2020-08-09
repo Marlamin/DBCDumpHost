@@ -1,13 +1,11 @@
-﻿using DBCD;
-using DBCD.Providers;
+﻿using DBCD.Providers;
 using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,7 +20,7 @@ namespace DBCDumpHost.Controllers
             public int draw { get; set; }
             public int recordsFiltered { get; set; }
             public int recordsTotal { get; set; }
-            public List<List<string>> data { get; set; }
+            public List<string[]> data { get; set; }
             public string error { get; set; }
         }
 
@@ -46,22 +44,13 @@ namespace DBCDumpHost.Controllers
         [HttpGet("{name}"), HttpPost("{name}")]
         public async Task<DataTablesResult> Get(CancellationToken cancellationToken, string name, string build, int draw, int start, int length, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            var searching = false;
-            var sorting = false;
-            var sortBySiteCol = 0;
-            var sortByName = "";
-            var sortDesc = "";
-            int? sortByArrayKey = null;
-
             var parameters = new Dictionary<string, string>();
 
             if (Request.Method == "POST")
             {
                 // POST, what site uses
                 foreach (var post in Request.Form)
-                {
                     parameters.Add(post.Key, post.Value);
-                }
 
                 if (parameters.ContainsKey("draw"))
                     draw = int.Parse(parameters["draw"]);
@@ -76,33 +65,16 @@ namespace DBCDumpHost.Controllers
             {
                 // GET, backwards compatibility for scripts/users using this
                 foreach (var get in Request.Query)
-                {
                     parameters.Add(get.Key, get.Value);
-                }
             }
 
-            if (!parameters.ContainsKey("search[value]"))
-            {
-                parameters.Add("search[value]", "");
-            }
-
-            var searchValue = parameters["search[value]"].Trim();
-
-            if (string.IsNullOrWhiteSpace(searchValue))
+            if (!parameters.TryGetValue("search[value]", out var searchValue))
             {
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw);
             }
             else
             {
-                searching = true;
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw + " with search " + searchValue);
-            }
-
-            if (parameters.ContainsKey("order[0][column]"))
-            {
-                sorting = true;
-                sortBySiteCol = int.Parse(parameters["order[0][column]"]);
-                sortDesc = parameters["order[0][dir]"];
             }
 
             var result = new DataTablesResult
@@ -121,185 +93,20 @@ namespace DBCDumpHost.Controllers
                 }
 
                 result.recordsTotal = storage.Values.Count();
+                result.data = new List<string[]>();
 
-                result.data = new List<List<string>>();
+                if (storage.Values.Count == 0 || storage.AvailableColumns.Length == 0)
+                    return result;
 
-                var filtering = false;
-                var filters = new Dictionary<int, Predicate<object>>();
+                var viewFilter = new DBCViewFilter(storage, parameters, WebUtility.HtmlEncode);
 
-                var siteColIndex = 0;
-
-                if (storage.Values.Count > 0)
-                {
-                    DBCDRow firstItem = storage.Values.First();
-
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
-                    {
-                        var field = firstItem[storage.AvailableColumns[i]];
-                        if (field is Array a)
-                        {
-                            for (var j = 0; j < a.Length; j++)
-                            {
-                                if (sorting && sortBySiteCol == siteColIndex)
-                                {
-                                    sortByName = storage.AvailableColumns[i];
-                                    sortByArrayKey = j;
-                                }
-
-                                if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
-                                {
-                                    var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
-                                    searching = true;
-                                    filtering = true;
-                                    filters.Add(siteColIndex, CreateFilterPredicate(filterVal));
-                                }
-
-                                siteColIndex++;
-                            }
-                        }
-                        else
-                        {
-                            if (sorting && sortBySiteCol == siteColIndex)
-                            {
-                                sortByName = storage.AvailableColumns[i];
-                            }
-
-                            if (parameters.ContainsKey("columns[" + siteColIndex + "][search][value]") && !string.IsNullOrWhiteSpace(parameters["columns[" + siteColIndex + "][search][value]"]))
-                            {
-                                var filterVal = parameters["columns[" + siteColIndex + "][search][value]"];
-                                searching = true;
-                                filtering = true;
-                                filters.Add(siteColIndex, CreateFilterPredicate(filterVal));
-                            }
-
-                            siteColIndex++;
-                        }
-                    }
-                }
-
-                List<DBCDRow> sorted;
-                if(sorting && !string.IsNullOrWhiteSpace(sortByName) && !sortByName.EndsWith("]"))
-                {
-                    if(sortDesc == "asc")
-                    {
-                        if (sortByArrayKey.HasValue)
-                            sorted = storage.Values.OrderBy(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
-                        else
-                            sorted = storage.Values.OrderBy(row => row[sortByName]).ToList();
-                    }
-                    else
-                    {
-                        if (sortByArrayKey.HasValue)
-                            sorted = storage.Values.OrderByDescending(row => ((Array)row[sortByName]).GetValue(sortByArrayKey.Value)).ToList();
-                        else
-                            sorted = storage.Values.OrderByDescending(row => row[sortByName]).ToList();
-                    }
-                }
-                else
-                {
-                    sorted = storage.Values.ToList();
-                }
-
-                var resultCount = 0;
-                foreach (DBCDRow item in sorted)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    siteColIndex = 0;
-
-                    var rowList = new List<string>();
-                    var matches = false;
-                    var allMatch = true;
-
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
-                    {
-                        var field = item[storage.AvailableColumns[i]];
-
-                        if (field is Array a)
-                        {
-                            for (var j = 0; j < a.Length; j++)
-                            {
-                                var val = a.GetValue(j).ToString();
-                                if (searching)
-                                {
-                                    if (filtering)
-                                    {
-                                        if (filters.ContainsKey(siteColIndex))
-                                        {
-                                            if (filters[siteColIndex](a.GetValue(j)))
-                                            {
-                                                matches = true;
-                                            }
-                                            else
-                                            {
-                                                allMatch = false;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
-                                            matches = true;
-                                    }
-                                }
-
-                                val = System.Web.HttpUtility.HtmlEncode(val);
-                                rowList.Add(val);
-                                siteColIndex++;
-                            }
-                        }
-                        else
-                        {
-                            var val = field.ToString();
-                            if (searching)
-                            {
-                                if (filtering)
-                                {
-                                    if (filters.ContainsKey(siteColIndex))
-                                    {
-                                        if (filters[siteColIndex](field))
-                                        {
-                                            matches = true;
-                                        }
-                                        else
-                                        {
-                                            allMatch = false;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (val.Contains(searchValue, StringComparison.InvariantCultureIgnoreCase))
-                                        matches = true;
-                                }
-                            }
-
-                            val = System.Web.HttpUtility.HtmlEncode(val);
-                            rowList.Add(val);
-                            siteColIndex++;
-                        }
-                    }
-
-                    if (searching)
-                    {
-                        if (matches && allMatch)
-                        {
-                            resultCount++;
-                            result.data.Add(rowList);
-                        }
-                    }
-                    else
-                    {
-                        resultCount++;
-                        result.data.Add(rowList);
-                    }
-                }
-
-                result.recordsFiltered = resultCount;
+                result.data = viewFilter.GetRecords(cancellationToken).ToList();
+                result.recordsFiltered = result.data.Count;
 
                 var takeLength = length;
-                if ((start + length) > resultCount)
+                if ((start + length) > result.recordsFiltered)
                 {
-                    takeLength = resultCount - start;
+                    takeLength = result.recordsFiltered - start;
                 }
 
                 result.data = result.data.GetRange(start, takeLength);
@@ -311,48 +118,6 @@ namespace DBCDumpHost.Controllers
             }
 
             return result;
-        }
-
-        private static Predicate<object> CreateFilterPredicate(String filterVal)
-        {
-            if (filterVal.StartsWith("exact:"))
-            {
-                return CreateRegexPredicate("^" + filterVal.Remove(0, 6) + "$");
-            }
-            else if (filterVal.StartsWith("regex:"))
-            {
-                return CreateRegexPredicate(filterVal.Remove(0, 6));
-            }
-            else if (filterVal.StartsWith("0x"))
-            {
-                if (ulong.TryParse(filterVal.Remove(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong flags))
-                {
-                    return CreateFlagsPredicate(flags);
-                }
-            }
-
-            // Fallback logic is kept outside of an `else` branch to permit invalid filter recovery.
-            return CreateRegexPredicate(filterVal);
-        }
-
-        private static Predicate<object> CreateRegexPredicate(string pattern)
-        {
-            var re = new Regex(pattern);
-            return (field) => re.IsMatch(field.ToString());
-        }
-
-        private static Predicate<object> CreateFlagsPredicate(ulong flags)
-        {
-            return (field) =>
-            {
-                if(field is int)
-                {
-                    field = unchecked((uint)field);
-                }
-
-                var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
-                return (num & flags) == flags;
-            };
         }
     }
 
