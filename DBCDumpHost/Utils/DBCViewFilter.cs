@@ -168,7 +168,7 @@ namespace DBCDumpHost.Utils
         /// <returns></returns>
         private void InitaliseSearch()
         {
-            if (Parameters.TryGetValue("search[value]", out var searchValue) && !string.IsNullOrEmpty(searchValue))
+            if (Parameters.TryGetValue("search[value]", out var searchValue) && !string.IsNullOrWhiteSpace(searchValue))
             {
                 Searching = true;
 

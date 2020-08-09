@@ -68,7 +68,7 @@ namespace DBCDumpHost.Controllers
                     parameters.Add(get.Key, get.Value);
             }
 
-            if (!parameters.TryGetValue("search[value]", out var searchValue))
+            if (!parameters.TryGetValue("search[value]", out var searchValue) || string.IsNullOrWhiteSpace(searchValue))
             {
                 Logger.WriteLine("Serving data " + start + "," + length + " for dbc " + name + " (" + build + ") for draw " + draw);
             }
