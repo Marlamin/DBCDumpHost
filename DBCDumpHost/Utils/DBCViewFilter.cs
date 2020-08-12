@@ -218,9 +218,9 @@ namespace DBCDumpHost.Utils
         {
             return (field) =>
             {
-                if (field is int)
+                if (field is int @int)
                 {
-                    field = unchecked((uint)field);
+                    field = unchecked((uint)@int);
                 }
 
                 var num = Convert.ToUInt64(field, CultureInfo.InvariantCulture);
