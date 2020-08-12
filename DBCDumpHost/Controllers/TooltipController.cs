@@ -26,34 +26,39 @@ namespace DBCDumpHost.Controllers
         }
 
         [HttpGet("item/{ItemID}")]
-        public async Task<Dictionary<string, object>> GetItemTooltip(int itemID, string build)
+        public async Task<IActionResult> GetItemTooltip(int itemID, string build)
         {
             var variables = new Dictionary<string, object>();
 
-            // Make sure DBs are loaded
             var itemDB = await dbcManager.GetOrLoad("Item", build);
-            var itemSparseDB = await dbcManager.GetOrLoad("ItemSparse", build);
-
             if(!itemDB.TryGetValue(itemID, out DBCDRow itemEntry))
             {
+                return NotFound();
                 throw new KeyNotFoundException("Unable to find ID " + itemID + " in Item.db2");
             }
 
             // TODO: Look in ItemModifiedAppearance => ItemAppearance for proper icon if icon in Item is 0.
             variables.Add("iconFileDataID", ((int)itemEntry["IconFileDataID"]).ToString());
 
+            var itemSparseDB = await dbcManager.GetOrLoad("ItemSparse", build);
             if (!itemSparseDB.TryGetValue(itemID, out DBCDRow itemSparseEntry))
             {
                 var itemSearchNameDB = await dbcManager.GetOrLoad("ItemSearchName", build);
                 if (!itemSearchNameDB.TryGetValue(itemID, out DBCDRow itemSearchNameEntry))
                 {
-                    throw new KeyNotFoundException("Unable to find ID " + itemID + " in ItemSearchName.db2 or ItemSparse.db2");
+                    variables.Add("name", "Unknown item");
+                    variables.Add("expansionID", (byte)0);
+                    variables.Add("itemLevel", (ushort)0);
+                    variables.Add("overallQualityID", (byte)0);
+                }
+                else
+                {
+                    variables.Add("name", (string)itemSearchNameEntry["Display_lang"]);
+                    variables.Add("expansionID", (byte)itemSearchNameEntry["ExpansionID"]);
+                    variables.Add("itemLevel", (ushort)itemSearchNameEntry["ItemLevel"]);
+                    variables.Add("overallQualityID", (byte)itemSearchNameEntry["OverallQualityID"]);
                 }
 
-                variables.Add("name", (string)itemSearchNameEntry["Display_lang"]);
-                variables.Add("expansionID", (byte)itemSearchNameEntry["ExpansionID"]);
-                variables.Add("itemLevel", (ushort)itemSearchNameEntry["ItemLevel"]);
-                variables.Add("overallQualityID", (byte)itemSearchNameEntry["OverallQualityID"]);
                 variables.Add("hasSparse", "false");
             }
             else
@@ -133,12 +138,23 @@ namespace DBCDumpHost.Controllers
                 variables.Add("maxDamage", Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString());
             }
 
+            try
+            {
+                var itemEffectEntry = await FindRecord("ItemEffect", build, "ParentItemID", itemID);
+                variables.Add("itemEffect", itemEffectEntry["SpellID"]);
+                variables.Add("itemEffectTriggerType", itemEffectEntry["TriggerType"]);
+            }
+            catch(KeyNotFoundException e)
+            {
+                variables.Add("itemEffect", 0);
+            }
+
             /* Fixups */
             // Classic ExpansionID column has 254, make 0. ¯\_(ツ)_/¯
             if ((byte)variables["expansionID"] == 254)
-                variables["expansionID"] = 0;
+            variables["expansionID"] = 0;
 
-            return variables;
+            return Ok(variables);
         }
 
         [HttpGet("spell/{SpellID}")]
