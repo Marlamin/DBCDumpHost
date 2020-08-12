@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using System.Collections.Generic;
@@ -13,10 +12,15 @@ using System.Net;
 
 namespace DBCDumpHost.Controllers
 {
+    using Parameters = IReadOnlyDictionary<string, string>;
+
     [Route("api/[controller]")]
     [ApiController]
     public class ExportController : ControllerBase
     {
+        private static readonly Parameters DefaultParameters = new Dictionary<string, string>();
+        private static readonly char[] QuoteableChars = new char[] { ',', '"', '\r', '\n' };
+
         private readonly DBCManager dbcManager;
 
         public ExportController(IDBCManager dbcManager)
@@ -24,102 +28,54 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
         }
 
-        private async Task<byte[]> GenerateCSVStream(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true, LocaleFlags locale = LocaleFlags.All_WoW)
+        private async Task<byte[]> GenerateCSVStream(IDBCDStorage storage, Parameters parameters, bool newLinesInStrings = true)
         {
-            var storage = await dbcManager.GetOrLoad(name, build, useHotfixes, locale);
-            if (!storage.Values.Any())
+            if (storage.Count == 0 || storage.AvailableColumns.Length == 0)
             {
                 throw new Exception("No rows found!");
             }
 
-            var headerWritten = false;
-
-            using (var exportStream = new MemoryStream())
-            using (var exportWriter = new StreamWriter(exportStream))
+            // NOTE: if newLinesInStrings is obsolete then use StringToCSVCell in ctor
+            Func<string, string> formatter = newLinesInStrings switch
             {
-                foreach (DBCDRow item in storage.Values)
-                {
-                    // Write CSV header
-                    if (!headerWritten)
-                    {
-                        for (var j = 0; j < storage.AvailableColumns.Length; ++j)
-                        {
-                            string fieldname = storage.AvailableColumns[j];
-                            var field = item[fieldname];
+                true => StringToCSVCell,
+                _ => StringToCSVCellSingleLine
+            };
 
-                            var isEndOfRecord = j == storage.AvailableColumns.Length - 1;
+            var viewFilter = new DBCViewFilter(storage, parameters, formatter);
 
-                            if (field is Array a)
-                            {
-                                for (var i = 0; i < a.Length; i++)
-                                {
-                                    var isEndOfArray = a.Length - 1 == i;
+            using var exportStream = new MemoryStream();
+            using var exportWriter = new StreamWriter(exportStream);
 
-                                    exportWriter.Write($"{fieldname}[{i}]");
-                                    if (!isEndOfArray)
-                                        exportWriter.Write(",");
-                                }
-                            }
-                            else
-                            {
-                                exportWriter.Write(fieldname);
-                            }
+            // write header
+            await exportWriter.WriteLineAsync(string.Join(",", GetColumnNames(storage)));
 
-                            if (!isEndOfRecord)
-                                exportWriter.Write(",");
-                        }
-                        headerWritten = true;
-                        exportWriter.WriteLine();
-                    }
+            // write records
+            foreach (var item in viewFilter.GetRecords())
+                await exportWriter.WriteLineAsync(string.Join(",", item));
 
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
-                    {
-                        var field = item[storage.AvailableColumns[i]];
+            exportWriter.Flush();
 
-                        var isEndOfRecord = i == storage.AvailableColumns.Length - 1;
-
-                        if (field is Array a)
-                        {
-                            for (var j = 0; j < a.Length; j++)
-                            {
-                                var isEndOfArray = a.Length - 1 == j;
-                                exportWriter.Write(a.GetValue(j));
-
-                                if (!isEndOfArray)
-                                    exportWriter.Write(",");
-                            }
-                        }
-                        else
-                        {
-                            var value = field;
-                            if (value.GetType() == typeof(string))
-                                value = StringToCSVCell((string)value, newLinesInStrings);
-
-                            exportWriter.Write(value);
-                        }
-
-                        if (!isEndOfRecord)
-                            exportWriter.Write(",");
-                    }
-
-                    exportWriter.WriteLine();
-                }
-
-                exportWriter.Dispose();
-
-                return exportStream.ToArray();
-            }
+            return exportStream.ToArray();
         }
 
         [Route("")]
         [Route("csv")]
-        [HttpGet]
+        [HttpGet, HttpPost]
         public async Task<ActionResult> ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             Logger.WriteLine("Exporting DBC " + name + " for build " + build + " and locale " + locale);
+
+            var parameters = DefaultParameters;
+
+            if (Request.Method == "POST")
+                parameters = Request.Form.ToDictionary(x => x.Key, x => (string)x.Value);
+
             try
             {
-                return new FileContentResult(await GenerateCSVStream(name, build, useHotfixes, newLinesInStrings, locale), "application/octet-stream")
+                var storage = await GetStorage(name, build, useHotfixes, locale);
+
+                return new FileContentResult(await GenerateCSVStream(storage, parameters, newLinesInStrings), "application/octet-stream")
                 {
                     FileDownloadName = Path.ChangeExtension(name, ".csv")
                 };
@@ -133,20 +89,6 @@ namespace DBCDumpHost.Controllers
             {
                 Logger.WriteLine("Error during CSV generation for DBC " + name + " for build " + build + ": " + e.Message);
                 return BadRequest();
-            }
-        }
-
-        private async Task<string[]> GetDBListForBuild(string build)
-        {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://wow.tools/api.php?type=dblist&build=" + build);
-            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
-            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                var result = await reader.ReadToEndAsync();
-                return result.Split(',');
             }
         }
 
@@ -166,7 +108,9 @@ namespace DBCDumpHost.Controllers
                         try
                         {
                             var cleanName = dbname.ToLower().Replace("dbfilesclient/", "").Replace(".db2", "");
-                            using (var exportStream = new MemoryStream(await GenerateCSVStream(cleanName, build, useHotfixes, newLinesInStrings, locale)))
+                            var storage = await GetStorage(cleanName, build, useHotfixes, locale);
+
+                            using (var exportStream = new MemoryStream(await GenerateCSVStream(storage, DefaultParameters, newLinesInStrings)))
                             {
                                 var entryname = cleanName + ".csv";
                                 var entry = archive.CreateEntry(entryname);
@@ -194,29 +138,61 @@ namespace DBCDumpHost.Controllers
             }
         }
 
-        public static string StringToCSVCell(string str, bool newLinesInStrings)
+        private async Task<IDBCDStorage> GetStorage(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            if (!newLinesInStrings)
-            {
-                str = str.Replace("\n", "").Replace("\r", "");
-            }
+            return await dbcManager.GetOrLoad(name, build, useHotfixes, locale);
+        }
 
-            var mustQuote = (str.Contains(",") || str.Contains("\"") || str.Contains("\r") || str.Contains("\n"));
-            if (mustQuote)
+        private IEnumerable<string> GetColumnNames(IDBCDStorage storage)
+        {
+            var record = storage.Values.FirstOrDefault();
+
+            if (record == null)
+                yield break;
+
+            for (var i = 0; i < storage.AvailableColumns.Length; ++i)
             {
-                var sb = new StringBuilder();
-                sb.Append("\"");
-                foreach (var nextChar in str)
+                var name = storage.AvailableColumns[i];
+
+                if (record[name] is Array array)
                 {
-                    sb.Append(nextChar);
-                    if (nextChar == '"')
-                        sb.Append("\"");
+                    // explode arrays by suffixing the ordinal
+                    for (var j = 0; j < array.Length; j++)
+                        yield return name + $"[{j}]";
                 }
-                sb.Append("\"");
-                return sb.ToString();
+                else
+                {
+                    yield return name;
+                }
             }
+        }
+
+        private async Task<string[]> GetDBListForBuild(string build)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://wow.tools/api.php?type=dblist&build=" + build);
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
+            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+            using (Stream stream = response.GetResponseStream())
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                var result = await reader.ReadToEndAsync();
+                return result.Split(',');
+            }
+        }
+
+        private static string StringToCSVCell(string str)
+        {
+            var mustQuote = str.IndexOfAny(QuoteableChars) > -1;
+            if (mustQuote)
+                return '"' + str.Replace("\"", "\"\"") + '"';
 
             return str;
+        }
+
+        private static string StringToCSVCellSingleLine(string str)
+        {
+            return StringToCSVCell(str.Replace("\n", "").Replace("\r", ""));
         }
     }
 }
