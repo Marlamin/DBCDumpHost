@@ -12,6 +12,32 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DBCDumpHost.Controllers
 {
+    struct TTItem
+    {
+        public string name { get; set; }
+        public int iconFileDataID { get; set; }
+        public byte expansionID { get; set; }
+        public ushort itemLevel { get; set; }
+        public byte overallQualityID { get; set; } 
+        public bool hasSparse { get; set; }
+        public TTItemEffect[] itemEffects { get; set; }
+        public string speed { get; set; }
+        public string dps { get; set; }
+        public string minDamage { get; set; }
+        public string maxDamage { get; set; }
+    }
+
+    struct TTItemEffect
+    {
+        public TTSpell spell { get; set; } 
+        public sbyte triggerType { get; set; }
+    }
+
+    struct TTSpell
+    {
+        public int spellID { get; set; }
+    }
+
     [Route("api/tooltip")]
     [ApiController]
     public class TooltipController : ControllerBase
@@ -28,7 +54,7 @@ namespace DBCDumpHost.Controllers
         [HttpGet("item/{ItemID}")]
         public async Task<IActionResult> GetItemTooltip(int itemID, string build)
         {
-            var variables = new Dictionary<string, object>();
+            var result = new TTItem();
 
             var itemDB = await dbcManager.GetOrLoad("Item", build);
             if(!itemDB.TryGetValue(itemID, out DBCDRow itemEntry))
@@ -38,7 +64,7 @@ namespace DBCDumpHost.Controllers
             }
 
             // TODO: Look in ItemModifiedAppearance => ItemAppearance for proper icon if icon in Item is 0.
-            variables.Add("iconFileDataID", ((int)itemEntry["IconFileDataID"]).ToString());
+            result.iconFileDataID = (int)itemEntry["IconFileDataID"];
 
             var itemSparseDB = await dbcManager.GetOrLoad("ItemSparse", build);
             if (!itemSparseDB.TryGetValue(itemID, out DBCDRow itemSparseEntry))
@@ -46,20 +72,14 @@ namespace DBCDumpHost.Controllers
                 var itemSearchNameDB = await dbcManager.GetOrLoad("ItemSearchName", build);
                 if (!itemSearchNameDB.TryGetValue(itemID, out DBCDRow itemSearchNameEntry))
                 {
-                    variables.Add("name", "Unknown item");
-                    variables.Add("expansionID", (byte)0);
-                    variables.Add("itemLevel", (ushort)0);
-                    variables.Add("overallQualityID", (byte)0);
+                    result.name = "Unknown Item";
                 }
                 else
                 {
-                    variables.Add("name", (string)itemSearchNameEntry["Display_lang"]);
-                    variables.Add("expansionID", (byte)itemSearchNameEntry["ExpansionID"]);
-                    variables.Add("itemLevel", (ushort)itemSearchNameEntry["ItemLevel"]);
-                    variables.Add("overallQualityID", (byte)itemSearchNameEntry["OverallQualityID"]);
+                    result.name = (string)itemSearchNameEntry["Display_lang"];
                 }
 
-                variables.Add("hasSparse", "false");
+                result.hasSparse = false;
             }
             else
             {
@@ -120,41 +140,39 @@ namespace DBCDumpHost.Controllers
                 NumberFormatInfo nfi = new NumberFormatInfo();
                 nfi.NumberDecimalSeparator = ".";
 
-                var itemLevel = (ushort)itemSparseEntry["ItemLevel"];
-                var overallQualityID = (byte)itemSparseEntry["OverallQualityID"];
+                result.itemLevel = (ushort)itemSparseEntry["ItemLevel"];
+                result.overallQualityID = (byte)itemSparseEntry["OverallQualityID"];
 
-                var damageRecord = await FindRecord(targetDamageDB, build, "ItemLevel", itemLevel);
-                var itemDamage = damageRecord.FieldAs<float[]>("Quality")[overallQualityID];
+                var damageRecord = await FindRecords(targetDamageDB, build, "ItemLevel", result.itemLevel);
+                var itemDamage = damageRecord[0].FieldAs<float[]>("Quality")[result.overallQualityID];
                 var dmgVariance = (float)itemSparseEntry["DmgVariance"];
 
-                variables.Add("hasSparse", "true");
-                variables.Add("name", (string)itemSparseEntry["Display_lang"]);
-                variables.Add("expansionID", (byte)itemSparseEntry["ExpansionID"]);
-                variables.Add("overallQualityID", overallQualityID);
-                variables.Add("itemLevel", itemLevel);
-                variables.Add("speed", itemDelay.ToString("F2", nfi));
-                variables.Add("dps", itemDamage.ToString("F2", nfi));
-                variables.Add("minDamage", Math.Floor(itemDamage * itemDelay * (1 - dmgVariance * 0.5)).ToString());
-                variables.Add("maxDamage", Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString());
+                result.hasSparse = true;
+                result.name = (string)itemSparseEntry["Display_lang"];
+                result.expansionID = (byte)itemSparseEntry["ExpansionID"];
+                result.speed = itemDelay.ToString("F2", nfi);
+                result.dps = itemDamage.ToString("F2", nfi);
+                result.minDamage = Math.Floor(itemDamage * itemDelay * (1 - dmgVariance * 0.5)).ToString();
+                result.maxDamage = Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString();
             }
 
-            try
+            var itemEffectEntries = await FindRecords("ItemEffect", build, "ParentItemID", itemID);
+            if(itemEffectEntries.Count > 0)
             {
-                var itemEffectEntry = await FindRecord("ItemEffect", build, "ParentItemID", itemID);
-                variables.Add("itemEffect", itemEffectEntry["SpellID"]);
-                variables.Add("itemEffectTriggerType", itemEffectEntry["TriggerType"]);
-            }
-            catch(KeyNotFoundException e)
-            {
-                variables.Add("itemEffect", 0);
+                result.itemEffects = new TTItemEffect[itemEffectEntries.Count];
+                for (var i = 0; i < itemEffectEntries.Count; i++)
+                {
+                    result.itemEffects[i].spell = new TTSpell { spellID = (int)itemEffectEntries[i]["SpellID"] };
+                    result.itemEffects[i].triggerType = (sbyte)itemEffectEntries[i]["TriggerType"];
+                }
             }
 
             /* Fixups */
             // Classic ExpansionID column has 254, make 0. ¯\_(ツ)_/¯
-            if ((byte)variables["expansionID"] == 254)
-            variables["expansionID"] = 0;
+            if (result.expansionID == 254)
+                result.expansionID = 0;
 
-            return Ok(variables);
+            return Ok(result);
         }
 
         [HttpGet("spell/{SpellID}")]
@@ -163,8 +181,10 @@ namespace DBCDumpHost.Controllers
             return "Spell tooltip for " + spellID;
         }
 
-        private async Task<DBCDRow> FindRecord(string name, string build, string col, int val)
+        private async Task<List<DBCDRow>> FindRecords(string name, string build, string col, int val)
         {
+            var rowList = new List<DBCDRow>();
+
             var storage = await dbcManager.GetOrLoad(name, build);
             if (col == "ID")
             {
@@ -179,7 +199,7 @@ namespace DBCDumpHost.Controllers
 
                         // Don't think FKs to arrays are possible, so only check regular value
                         if (row[fieldName].ToString() == val.ToString())
-                            return row;
+                            rowList.Add(row);
                     }
                 }
             }
@@ -196,12 +216,12 @@ namespace DBCDumpHost.Controllers
 
                         // Don't think FKs to arrays are possible, so only check regular value
                         if (row[fieldName].ToString() == val.ToString())
-                            return row;
+                            rowList.Add(row);
                     }
                 }
             }
 
-            throw new KeyNotFoundException("No record found matching specified key/value");
+            return rowList;
         }
     }
 }
