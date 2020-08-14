@@ -43,6 +43,39 @@ namespace DBCDumpHost.Controllers
         public string Description { get; set; }
     }
 
+    enum InventoryType : sbyte
+    {
+        NonEquippable = 0,
+        Head = 1,
+        Neck = 2,
+        Shoulder = 3,
+        Shirt = 4,
+        Chest = 5,
+        Waist = 6,
+        Legs = 7,
+        Feet = 8,
+        Wrist = 9,
+        Hands = 10,
+        Finger = 11,
+        Trinket = 12,
+        OneHand = 13,
+        Shield = 14,
+        Ranged = 15,
+        Back = 16,
+        TwoHand = 17,
+        Bag = 18,
+        Tabard = 19,
+        Robe = 20,
+        MainHand = 21,
+        OffHand = 22,
+        HeldInOffhand = 23,
+        Ammo = 24,
+        Thrown = 25,
+        RangedRight = 26,
+        Quiver = 27,
+        Relic = 28
+    }
+
     [Route("api/tooltip")]
     [ApiController]
     public class TooltipController : ControllerBase
@@ -54,6 +87,25 @@ namespace DBCDumpHost.Controllers
         {
             this.dbdProvider = dbdProvider as DBDProvider;
             this.dbcManager = dbcManager as DBCManager;
+        }
+
+        // TEMP -- Testing tooltips for incomplete item data
+        [HttpGet("unkItems")]
+        public async Task<IActionResult> GetUnkItems()
+        {
+            var build = "9.0.1.35522";
+            var itemDB = await dbcManager.GetOrLoad("Item", build);
+            var itemSparseDB = await dbcManager.GetOrLoad("ItemSparse", build, true);
+            var itemSearchNameDB = await dbcManager.GetOrLoad("ItemSearchName", build, true);
+            var unkItems = new List<int>();
+            foreach(var itemID in itemDB.Keys)
+            {
+                if(!itemSparseDB.ContainsKey(itemID) && !itemSearchNameDB.ContainsKey(itemID))
+                {
+                    unkItems.Add(itemID);
+                }
+            }
+            return Ok(unkItems);
         }
 
         [HttpGet("item/{ItemID}")]
@@ -104,57 +156,7 @@ namespace DBCDumpHost.Controllers
             else
             {
                 var itemDelay = (ushort)itemSparseEntry["ItemDelay"] / 1000f;
-
-                var isCasterWeapon = (itemSparseEntry.FieldAs<int[]>("Flags")[1] & 0x200) == 0x200;
-
-                var targetDamageDB = "";
-
-                switch ((byte)itemEntry["SubclassID"])
-                {
-                    // 1H
-                    case 0:  //	Axe
-                    case 4:  //	Mace
-                    case 7:  //	Sword
-                    case 9:  //	Warglaives
-                    case 11: //	Bear Claws
-                    case 13: //	Fist Weapon
-                    case 15: //	Dagger
-                    case 16: //	Thrown
-                    case 19: //	Wand,
-                        if (isCasterWeapon)
-                        {
-                            targetDamageDB = "ItemDamageOneHandCaster";
-                        }
-                        else
-                        {
-                            targetDamageDB = "ItemDamageOneHand";
-                        }
-                        break;
-                    // 2H
-                    case 1:  // 2H Axe
-                    case 2:  // Bow
-                    case 3:  // Gun
-                    case 5:  // 2H Mace
-                    case 6:  // Polearm
-                    case 8:  // 2H Sword
-                    case 10: //	Staff,
-                    case 12: //	Cat Claws,
-                    case 17: //	Spear,
-                    case 18: //	Crossbow
-                    case 20: //	Fishing Pole
-                        if (isCasterWeapon)
-                        {
-                            targetDamageDB = "ItemDamageTwoHandCaster";
-                        }
-                        else
-                        {
-                            targetDamageDB = "ItemDamageTwoHand";
-                        }
-                        break;
-                    case 14: //	14: 'Miscellaneous',
-                        targetDamageDB = "ItemDamageOneHandCaster";
-                        break;
-                }
+                var targetDamageDB = GetDamageDBByItemSubClass((byte)itemEntry["SubclassID"], (itemSparseEntry.FieldAs<int[]>("Flags")[1] & 0x200) == 0x200);
 
                 // Use . as decimal separator
                 NumberFormatInfo nfi = new NumberFormatInfo();
@@ -162,6 +164,10 @@ namespace DBCDumpHost.Controllers
 
                 result.ItemLevel = (ushort)itemSparseEntry["ItemLevel"];
                 result.OverallQualityID = (byte)itemSparseEntry["OverallQualityID"];
+
+                // WIP - Testing
+                var crRow = GameTableProvider.GetCombatRatingsMultByILVLRow(result.ItemLevel, build);
+                var randProp = await GetRandomPropertyByInventoryType(result.ItemLevel, result.OverallQualityID, (InventoryType)result.InventoryType, result.SubClassID, build);
 
                 var damageRecord = await FindRecords(targetDamageDB, build, "ItemLevel", result.ItemLevel);
                 var itemDamage = damageRecord[0].FieldAs<float[]>("Quality")[result.OverallQualityID];
@@ -187,9 +193,7 @@ namespace DBCDumpHost.Controllers
                 {
                     result.ItemEffects[i].TriggerType = (sbyte)itemEffectEntries[i]["TriggerType"];
 
-                    var ttSpell = new TTSpell();
-
-                    ttSpell = new TTSpell { SpellID = (int)itemEffectEntries[i]["SpellID"] };
+                    var ttSpell = new TTSpell { SpellID = (int)itemEffectEntries[i]["SpellID"] };
                     if (spellDB.TryGetValue((int)itemEffectEntries[i]["SpellID"], out DBCDRow spellRow))
                     {
                         var spellDescription = (string)spellRow["Description_lang"];
@@ -218,6 +222,127 @@ namespace DBCDumpHost.Controllers
                 result.ExpansionID = 0;
 
             return Ok(result);
+        }
+
+        private string GetDamageDBByItemSubClass(byte itemSubClassID, bool isCasterWeapon)
+        {
+            switch (itemSubClassID)
+            {
+                // 1H
+                case 0:  //	Axe
+                case 4:  //	Mace
+                case 7:  //	Sword
+                case 9:  //	Warglaives
+                case 11: //	Bear Claws
+                case 13: //	Fist Weapon
+                case 15: //	Dagger
+                case 16: //	Thrown
+                case 19: //	Wand,
+                    if (isCasterWeapon)
+                    {
+                        return "ItemDamageOneHandCaster";
+                    }
+                    else
+                    {
+                        return "ItemDamageOneHand";
+                    }
+                // 2H
+                case 1:  // 2H Axe
+                case 2:  // Bow
+                case 3:  // Gun
+                case 5:  // 2H Mace
+                case 6:  // Polearm
+                case 8:  // 2H Sword
+                case 10: //	Staff,
+                case 12: //	Cat Claws,
+                case 17: //	Spear,
+                case 18: //	Crossbow
+                case 20: //	Fishing Pole
+                    if (isCasterWeapon)
+                    {
+                        return "ItemDamageTwoHandCaster";
+                    }
+                    else
+                    {
+                        return "ItemDamageTwoHand";
+                    }
+                case 14: //	14: 'Miscellaneous',
+                    return "ItemDamageOneHandCaster";
+                default:
+                    throw new Exception("Don't know what table to map to unknown SubClassID " + itemSubClassID);
+            }
+        }
+
+        private async Task<int> GetRandomPropertyByInventoryType(ushort itemLevel, byte overallQualityID, InventoryType inventoryType, byte subClassID, string build)
+        {
+            sbyte targetIndex = -1;
+            switch (inventoryType)
+            {
+                case InventoryType.Head:
+                case InventoryType.Shirt:
+                case InventoryType.Chest:
+                case InventoryType.Legs:
+                case InventoryType.Ranged:
+                case InventoryType.TwoHand:
+                case InventoryType.Robe:
+                case InventoryType.Thrown:
+                    targetIndex = 0;
+                    break;
+                case InventoryType.Neck:
+                case InventoryType.Wrist:
+                case InventoryType.Finger:
+                case InventoryType.Back:
+                    targetIndex = 2;
+                    break;
+                case InventoryType.Shoulder:
+                case InventoryType.Waist:
+                case InventoryType.Feet:
+                case InventoryType.Hands:
+                case InventoryType.Trinket:
+                    targetIndex = 1;
+                    break;
+                case InventoryType.OneHand:
+                case InventoryType.Shield:
+                case InventoryType.MainHand:
+                case InventoryType.OffHand:
+                case InventoryType.HeldInOffhand:
+                    targetIndex = 3;
+                    break;
+                case InventoryType.RangedRight:
+                    targetIndex = 3;
+                    if(subClassID != 19) // Wands
+                        targetIndex = 0;
+                    break;
+                case InventoryType.Relic:
+                    targetIndex = 4;
+                    break;
+            }
+                    
+            var randomPropDB = await dbcManager.GetOrLoad("RandPropPoints", build);
+            if (randomPropDB.TryGetValue(itemLevel, out DBCDRow randPropEntry))
+            {
+                var targetField = "";
+                switch (overallQualityID)
+                {
+                    case 2:
+                        targetField = "Good";
+                        break;
+                    case 3:
+                        targetField = "Superior";
+                        break;
+                    case 4:
+                        targetField = "Epic";
+                        break;
+                    default:
+                        throw new Exception("Unsupported quality: " + overallQualityID);
+                }
+
+                return (int)randPropEntry.FieldAs<uint[]>(targetField)[targetIndex];
+            }
+            else
+            {
+                throw new Exception("Item Level " + itemLevel + " not found in RandPropPoints");
+            }
         }
 
         [HttpGet("spell/{SpellID}")]
