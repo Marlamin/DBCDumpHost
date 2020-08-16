@@ -48,7 +48,8 @@ namespace DBCDumpHost.Controllers
     struct TTItemStat
     {
         public sbyte StatTypeID { get; set; }
-        public double Value { get; set; }
+        public int Value { get; set; }
+        public bool IsCombatRating { get; set; }
     }
 
     enum InventoryType : sbyte
@@ -253,34 +254,57 @@ namespace DBCDumpHost.Controllers
                         if (statTypes[statIndex] == -1 || statTypes[statIndex] == 0)
                             continue;
 
+                        // TODO: Socket penalty
+                        var socketPenalty = 0.0f;
+                        var baseStat = (int)((statPercentEditor[statIndex] * randProp) * 0.000099999997f - socketPenalty + 0.5f);
 
                         var multiplierRow = new GameTableProvider.MultByILVLRow(){
-                            ArmorMultiplier = 1.0d,
                             JewelryMultiplier = 1.0d,
                             TrinketMultiplier = 1.0d,
-                            WeaponMultiplier = 1.0d
+                            WeaponMultiplier = 1.0d,
+                            ArmorMultiplier = 1.0d,
                         };
 
                         if (IsCombatRating(statTypes[statIndex]))
                         {
-                            multiplierRow = GameTableProvider.GetCombatRatingsMultByILVLRow(result.ItemLevel, build);
+                            multiplierRow = GameTableProvider.GetCombatRatingsMultByILVLRow(result.ItemLevel - 1, build);
                         }
                         else if((ItemStatType)statTypes[statIndex] == ItemStatType.STAMINA)
                         {
-                            multiplierRow = GameTableProvider.GetStaminaMultByILVLRow(result.ItemLevel, build);
+                            multiplierRow = GameTableProvider.GetStaminaMultByILVLRow(result.ItemLevel - 1, build);
                         }
 
-
-                        double calculatedValue;
-
-                        if ((InventoryType)result.InventoryType == InventoryType.Neck || (InventoryType)result.InventoryType == InventoryType.Finger)
+                        // RandProp * StatPctEditor * StaminaMult * 0.0001 
+                        //       60 *          7889 * 1.110734158 * 0.0001
+                        double multiplier;
+                        switch ((InventoryType)result.InventoryType)
                         {
-                            calculatedValue = randProp * statPercentEditor[statIndex] * multiplierRow.JewelryMultiplier * 0.0001;
+                            case InventoryType.Neck:
+                            case InventoryType.Finger:
+                                multiplier = multiplierRow.JewelryMultiplier;
+                                break;
+                            case InventoryType.Trinket:
+                                multiplier = multiplierRow.TrinketMultiplier;
+                                break;
+                            case InventoryType.OneHand:
+                            case InventoryType.Shield:
+                            case InventoryType.Ranged:
+                            case InventoryType.TwoHand:
+                            case InventoryType.MainHand:
+                            case InventoryType.OffHand:
+                            case InventoryType.HeldInOffhand:
+                            case InventoryType.RangedRight:
+                                multiplier = multiplierRow.WeaponMultiplier;
+                                break;
+                            default:
+                                multiplier = multiplierRow.ArmorMultiplier;
+                                break;
                         }
-                        else
-                        {
-                            calculatedValue = randProp * statPercentEditor[statIndex] * multiplierRow.ArmorMultiplier * 0.0001;
-                        }
+
+                        int calculatedValue = (int)(multiplier * baseStat);
+
+                        if (calculatedValue == 0)
+                            continue;
 
                         if (statList.TryGetValue(statTypes[statIndex], out var currStat))
                         {
@@ -291,7 +315,8 @@ namespace DBCDumpHost.Controllers
                             statList.Add(statTypes[statIndex], new TTItemStat()
                             {
                                 StatTypeID = statTypes[statIndex],
-                                Value = calculatedValue
+                                Value = calculatedValue,
+                                IsCombatRating = IsCombatRating(statTypes[statIndex])
                             });
                         }
                     }
@@ -409,7 +434,6 @@ namespace DBCDumpHost.Controllers
         {
             switch ((ItemStatType)StatTypeID)
             {
-                case ItemStatType.MASTERY_RATING:
                 case ItemStatType.DODGE_RATING:
                 case ItemStatType.PARRY_RATING:
                 case ItemStatType.BLOCK_RATING:
@@ -418,25 +442,18 @@ namespace DBCDumpHost.Controllers
                 case ItemStatType.HIT_SPELL_RATING:
                 case ItemStatType.CRIT_MELEE_RATING:
                 case ItemStatType.CRIT_RANGED_RATING:
-                case ItemStatType.CRIT_SPELL_RATING:
-                case ItemStatType.CRIT_TAKEN_RANGED_RATING:
-                case ItemStatType.CRIT_TAKEN_SPELL_RATING:
-                case ItemStatType.HASTE_MELEE_RATING:
-                case ItemStatType.HASTE_RANGED_RATING:
-                case ItemStatType.HASTE_SPELL_RATING:
                 case ItemStatType.HIT_RATING:
                 case ItemStatType.CRIT_RATING:
-                case ItemStatType.HIT_TAKEN_RATING:
-                case ItemStatType.CRIT_TAKEN_RATING:
                 case ItemStatType.RESILIENCE_RATING:
                 case ItemStatType.HASTE_RATING:
                 case ItemStatType.EXPERTISE_RATING:
+                case ItemStatType.VERSATILITY:
+                case ItemStatType.MASTERY_RATING:
                 case ItemStatType.CR_MULTISTRIKE:
                 case ItemStatType.CR_SPEED:
                 case ItemStatType.CR_LIFESTEAL:
                 case ItemStatType.CR_AVOIDANCE:
-                case ItemStatType.VERSATILITY:
-                case ItemStatType.EXTRA_ARMOR:
+                case ItemStatType.CR_STURDINESS:
                     return true;
                 default:
                     return false;

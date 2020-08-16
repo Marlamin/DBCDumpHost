@@ -73,7 +73,7 @@ namespace DBCDumpHost.Services
 
         public static MultByILVLRow GetCombatRatingsMultByILVLRow(int itemLevel, string build)
         {
-            if(!combatRatingMultiByILVL.ContainsKey(build))
+            if (!combatRatingMultiByILVL.ContainsKey(build))
             {
                 using (var client = new HttpClient())
                 {
