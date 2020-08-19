@@ -52,7 +52,7 @@ namespace DBCDumpHost.Controllers
             var offset = 0;
             var recordFound = false;
 
-            if(!calcOffset && col == "ID")
+            if (!calcOffset && col == "ID")
             {
                 if (storage.TryGetValue(val, out DBCDRow row))
                 {

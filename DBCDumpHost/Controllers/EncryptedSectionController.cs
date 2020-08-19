@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DBCD.Providers;
+using DBCDumpHost.Services;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DBCD.Providers;
-using DBCDumpHost.Services;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace DBCDumpHost.Controllers
 {
@@ -25,21 +23,21 @@ namespace DBCDumpHost.Controllers
         [HttpGet]
         public async Task<string> Get(string name, string build, bool useHotfixes = false)
         {
-            if(name == null || build == null)
+            if (name == null || build == null)
             {
                 return "Not enough variables";
             }
 
-            var storage =  await dbcManager.GetOrLoad(name, build, useHotfixes);
+            var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
             if (!storage.Values.Any())
             {
                 throw new Exception("No rows found!");
             }
 
             var returnString = "";
-            foreach(var encryptedSection in storage.GetEncryptedSections())
+            foreach (var encryptedSection in storage.GetEncryptedSections())
             {
-                returnString += encryptedSection.Key.ToString("X16") + " " + encryptedSection.Value + "\n"; 
+                returnString += encryptedSection.Key.ToString("X16") + " " + encryptedSection.Value + "\n";
             }
 
             return returnString;

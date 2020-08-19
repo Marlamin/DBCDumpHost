@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace DBCDumpHost.Services
 {
@@ -80,18 +78,19 @@ namespace DBCDumpHost.Services
                     var tempDict = new Dictionary<int, MultByILVLRow>();
                     var output = client.GetStringAsync(SettingManager.cascToolHost + "/casc/file/gametable?gameTableName=CombatRatingsMultByILvl&fullBuild=" + build).Result;
                     var lines = output.Split("\r\n");
-                    for(var i = 1; i < lines.Length; i++)
+                    for (var i = 1; i < lines.Length; i++)
                     {
                         if (lines[i].Length == 0)
                             continue;
 
                         var fields = lines[i].Split('\t');
-                        tempDict.Add(int.Parse(fields[0]), 
-                            new MultByILVLRow() { 
-                                ArmorMultiplier = double.Parse(fields[1], CultureInfo.InvariantCulture), 
-                                WeaponMultiplier = double.Parse(fields[2], CultureInfo.InvariantCulture), 
-                                TrinketMultiplier = double.Parse(fields[3], CultureInfo.InvariantCulture), 
-                                JewelryMultiplier = double.Parse(fields[4], CultureInfo.InvariantCulture) 
+                        tempDict.Add(int.Parse(fields[0]),
+                            new MultByILVLRow()
+                            {
+                                ArmorMultiplier = double.Parse(fields[1], CultureInfo.InvariantCulture),
+                                WeaponMultiplier = double.Parse(fields[2], CultureInfo.InvariantCulture),
+                                TrinketMultiplier = double.Parse(fields[3], CultureInfo.InvariantCulture),
+                                JewelryMultiplier = double.Parse(fields[4], CultureInfo.InvariantCulture)
                             });
                     }
                     combatRatingMultiByILVL.Add(build, tempDict);

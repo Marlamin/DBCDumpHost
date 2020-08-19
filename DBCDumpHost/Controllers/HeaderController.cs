@@ -152,10 +152,10 @@ namespace DBCDumpHost.Controllers
 
                 result.relationsToColumns = new Dictionary<string, List<string>>();
 
-                foreach(var column in result.headers)
+                foreach (var column in result.headers)
                 {
                     var relationsToCol = dbdProvider.GetRelationsToColumn(name + "::" + column, true);
-                    if(relationsToCol.Count > 0)
+                    if (relationsToCol.Count > 0)
                     {
                         result.relationsToColumns.Add(column, relationsToCol);
                     }

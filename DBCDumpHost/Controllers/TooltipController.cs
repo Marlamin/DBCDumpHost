@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
-using DBCD;
+﻿using DBCD;
 using DBCD.Providers;
 using DBCDumpHost.Services;
 using DBCDumpHost.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using WoWTools.SpellDescParser;
 
 namespace DBCDumpHost.Controllers
 {
@@ -44,6 +45,7 @@ namespace DBCDumpHost.Controllers
         public int SpellID { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public int IconFileDataID { get; set; }
     }
 
     public struct TTItemStat
@@ -94,7 +96,6 @@ namespace DBCDumpHost.Controllers
             if (!itemDB.TryGetValue(itemID, out DBCDRow itemEntry))
             {
                 return NotFound();
-                throw new KeyNotFoundException("Unable to find ID " + itemID + " in Item.db2");
             }
 
             result.IconFileDataID = (int)itemEntry["IconFileDataID"];
@@ -102,10 +103,10 @@ namespace DBCDumpHost.Controllers
             result.SubClassID = (byte)itemEntry["SubclassID"];
             result.InventoryType = (sbyte)itemEntry["InventoryType"];
 
+            // Icons in Item.db2 can be 0. Look up the proper one in ItemModifiedAppearance => ItemAppearance
             if (result.IconFileDataID == 0)
             {
-                // Look in ItemModifiedAppearance => ItemAppearance for proper icon
-                var itemModifiedAppearances = await FindRecords("ItemModifiedAppearance", build, "ItemID", itemID);
+                var itemModifiedAppearances = await dbcManager.FindRecords("ItemModifiedAppearance", build, "ItemID", itemID);
                 if (itemModifiedAppearances.Count > 0)
                 {
                     var itemAppearanceDB = await dbcManager.GetOrLoad("ItemAppearance", build);
@@ -130,6 +131,7 @@ namespace DBCDumpHost.Controllers
                     result.RequiredLevel = (sbyte)itemSearchNameEntry["RequiredLevel"];
                     result.ExpansionID = (byte)itemSearchNameEntry["ExpansionID"];
                     result.ItemLevel = (ushort)itemSearchNameEntry["ItemLevel"];
+                    result.OverallQualityID = (byte)itemSearchNameEntry["OverallQualityID"];
                 }
 
                 result.HasSparse = false;
@@ -139,15 +141,11 @@ namespace DBCDumpHost.Controllers
                 var itemDelay = (ushort)itemSparseEntry["ItemDelay"] / 1000f;
                 var targetDamageDB = GetDamageDBByItemSubClass((byte)itemEntry["SubclassID"], (itemSparseEntry.FieldAs<int[]>("Flags")[1] & 0x200) == 0x200);
 
-                // Use . as decimal separator
-                NumberFormatInfo nfi = new NumberFormatInfo();
-                nfi.NumberDecimalSeparator = ".";
-
                 result.ItemLevel = (ushort)itemSparseEntry["ItemLevel"];
                 result.OverallQualityID = (byte)itemSparseEntry["OverallQualityID"];
 
                 var statTypes = itemSparseEntry.FieldAs<sbyte[]>("StatModifier_bonusStat");
-                if (statTypes.Length > 0 && !statTypes.All(x => x == -1) && !statTypes.All(x => x == 0))
+                if (statTypes.Length > 0 && statTypes.Any(x => x != -1) && statTypes.Any(x => x != 0))
                 {
                     var (RandomPropField, RandomPropIndex) = TooltipUtils.GetRandomPropertyByInventoryType(result.OverallQualityID, result.InventoryType, result.SubClassID, build);
 
@@ -188,7 +186,7 @@ namespace DBCDumpHost.Controllers
                     result.Stats = statList.Values.ToArray();
                 }
 
-                var damageRecord = await FindRecords(targetDamageDB, build, "ItemLevel", result.ItemLevel);
+                var damageRecord = await dbcManager.FindRecords(targetDamageDB, build, "ItemLevel", result.ItemLevel);
                 var itemDamage = damageRecord[0].FieldAs<float[]>("Quality")[result.OverallQualityID];
                 var dmgVariance = (float)itemSparseEntry["DmgVariance"];
 
@@ -198,13 +196,17 @@ namespace DBCDumpHost.Controllers
                 result.ExpansionID = (byte)itemSparseEntry["ExpansionID"];
                 result.RequiredLevel = (sbyte)itemSparseEntry["RequiredLevel"];
 
-                result.Speed = itemDelay.ToString("F2", nfi);
-                result.DPS = itemDamage.ToString("F2", nfi);
                 result.MinDamage = Math.Floor(itemDamage * itemDelay * (1 - dmgVariance * 0.5)).ToString();
                 result.MaxDamage = Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString();
+
+                // Use . as decimal separator
+                NumberFormatInfo nfi = new NumberFormatInfo();
+                nfi.NumberDecimalSeparator = ".";
+                result.Speed = itemDelay.ToString("F2", nfi);
+                result.DPS = itemDamage.ToString("F2", nfi);
             }
 
-            var itemEffectEntries = await FindRecords("ItemEffect", build, "ParentItemID", itemID);
+            var itemEffectEntries = await dbcManager.FindRecords("ItemEffect", build, "ParentItemID", itemID);
             if (itemEffectEntries.Count > 0)
             {
                 var spellDB = await dbcManager.GetOrLoad("Spell", build);
@@ -295,54 +297,50 @@ namespace DBCDumpHost.Controllers
             }
         }
 
-
         [HttpGet("spell/{SpellID}")]
-        public string GetSpellTooltip(int spellID)
+        public async Task<IActionResult> GetSpellTooltip(int spellID, string build)
         {
-            return "Spell tooltip for " + spellID;
-        }
+            var result = new TTSpell();
+            result.SpellID = spellID;
 
-        private async Task<List<DBCDRow>> FindRecords(string name, string build, string col, int val)
-        {
-            var rowList = new List<DBCDRow>();
-
-            var storage = await dbcManager.GetOrLoad(name, build);
-            if (col == "ID")
+            var spellNameDB = await dbcManager.GetOrLoad("SpellName", build);
+            if (spellNameDB.TryGetValue(spellID, out DBCDRow spellNameRow))
             {
-                if (storage.TryGetValue(val, out DBCDRow row))
+                var spellName = (string)spellNameRow["Name_lang"];
+                if (!string.IsNullOrWhiteSpace(spellName))
                 {
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
-                    {
-                        string fieldName = storage.AvailableColumns[i];
-
-                        if (fieldName != col)
-                            continue;
-
-                        // Don't think FKs to arrays are possible, so only check regular value
-                        if (row[fieldName].ToString() == val.ToString())
-                            rowList.Add(row);
-                    }
+                    result.Name = spellName;
                 }
+            }
+
+            var spellDB = await dbcManager.GetOrLoad("Spell", build);
+            if (spellDB.TryGetValue(spellID, out var spellRow))
+            {
+                var dataSupplier = new SpellDataSupplier(dbcManager, build);
+
+                if ((string)spellRow["Description_lang"] != string.Empty)
+                {
+                    var spellDescParser = new SpellDescParser((string)spellRow["Description_lang"]);
+                    spellDescParser.Parse();
+
+                    var sb = new StringBuilder();
+                    spellDescParser.root.Format(sb, spellID, dataSupplier);
+
+                    result.Description = sb.ToString();
+                }
+            }
+
+            var spellMiscRow = dbcManager.FindRecords("spellMisc", build, "SpellID", spellID, true).Result;
+            if (spellMiscRow.Count == 0)
+            {
+                result.IconFileDataID = 134400;
             }
             else
             {
-                foreach (DBCDRow row in storage.Values)
-                {
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
-                    {
-                        string fieldName = storage.AvailableColumns[i];
-
-                        if (fieldName != col)
-                            continue;
-
-                        // Don't think FKs to arrays are possible, so only check regular value
-                        if (row[fieldName].ToString() == val.ToString())
-                            rowList.Add(row);
-                    }
-                }
+                result.IconFileDataID = (int)spellMiscRow[0]["SpellIconFileDataID"];
             }
 
-            return rowList;
+            return Ok(result);
         }
     }
 }

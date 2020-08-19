@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBFileReaderLib", "DBCD\DBF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBCDTester", "DBCDTester\DBCDTester.csproj", "{EECA2B45-F5ED-42E6-8827-6471427AD04E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{B0ED83D4-C5DB-4205-BE53-3D9636C2CCC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWTools.SpellDescParser", "WoWTools.SpellDescParser\WoWTools.SpellDescParser.csproj", "{3BECDCD1-B1BD-4E9F-A777-BFBB87B4A4AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EECA2B45-F5ED-42E6-8827-6471427AD04E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0ED83D4-C5DB-4205-BE53-3D9636C2CCC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0ED83D4-C5DB-4205-BE53-3D9636C2CCC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0ED83D4-C5DB-4205-BE53-3D9636C2CCC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0ED83D4-C5DB-4205-BE53-3D9636C2CCC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BECDCD1-B1BD-4E9F-A777-BFBB87B4A4AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BECDCD1-B1BD-4E9F-A777-BFBB87B4A4AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BECDCD1-B1BD-4E9F-A777-BFBB87B4A4AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BECDCD1-B1BD-4E9F-A777-BFBB87B4A4AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

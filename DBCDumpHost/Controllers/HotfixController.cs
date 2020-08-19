@@ -1,4 +1,8 @@
-﻿using System;
+﻿using DBCDumpHost.Services;
+using DBCDumpHost.Utils;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -6,11 +10,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using DBCDumpHost.Services;
-using DBCDumpHost.Utils;
-using DBFileReaderLib;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace DBCDumpHost.Controllers
 {
@@ -34,7 +33,8 @@ namespace DBCDumpHost.Controllers
                     var result = client.GetStringAsync("https://wow.tools/api.php?type=token&token=" + token).Result;
                     return int.Parse(result);
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Logger.WriteLine("Error checking user token: " + e.Message);
                 return 0;
@@ -114,10 +114,10 @@ namespace DBCDumpHost.Controllers
                     {
                         await formFile.CopyToAsync(stream);
 
-                        foreach(var file in new ZipArchive(stream).Entries)
+                        foreach (var file in new ZipArchive(stream).Entries)
                         {
                             // if file == dbcache
-                            if(file.Name == "DBCache.bin")
+                            if (file.Name == "DBCache.bin")
                             {
                                 using (var entryMs = new MemoryStream())
                                 {
@@ -169,7 +169,7 @@ namespace DBCDumpHost.Controllers
                 }
 
                 var version = bin.ReadUInt32();
-                if(version > 7)
+                if (version > 7)
                 {
                     Logger.WriteLine("Unsupported DBCache version: " + version);
                     return;
@@ -191,7 +191,7 @@ namespace DBCDumpHost.Controllers
         private void ProcessWDB(MemoryStream stream, int userID)
         {
             Logger.WriteLine("New WDB of size " + stream.Length + " received!");
-            if(stream.Length < 33)
+            if (stream.Length < 33)
             {
                 Logger.WriteLine("Skipping saving of WDB, is 32 bytes or less (empty)");
                 return;
@@ -208,12 +208,12 @@ namespace DBCDumpHost.Controllers
                 var formatVersion = bin.ReadUInt32();
 
                 // Arbitrary sanity checking
-                if(clientBuild < 34220 || clientBuild > 98765)
+                if (clientBuild < 34220 || clientBuild > 98765)
                 {
                     Logger.WriteLine("Ignoring cache, invalid build (" + clientBuild + ")");
                     return;
                 }
-                
+
                 if (clientLocale != "enUS")
                 {
                     Logger.WriteLine("Ignoring cache, invalid locale (" + clientLocale + ")");

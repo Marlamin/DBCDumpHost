@@ -20,6 +20,7 @@
     <ProjectReference Include="..\DBCD\DBCD\DBCD.csproj" />
     <ProjectReference Include="..\DBCD\DBFileReaderLib\DBFileReaderLib.csproj" />
     <ProjectReference Include="..\DBDiffer\DBDiffer\DBDiffer.csproj" />
+    <ProjectReference Include="..\WoWTools.SpellDescParser\WoWTools.SpellDescParser.csproj" />
   </ItemGroup>
 
   <ItemGroup>

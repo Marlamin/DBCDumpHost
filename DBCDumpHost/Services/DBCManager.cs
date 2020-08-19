@@ -5,6 +5,7 @@ using DBCDumpHost.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -107,6 +108,57 @@ namespace DBCDumpHost.Services
             // TODO: Only clear hotfix caches? :(
             Cache.Dispose();
             Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+        }
+
+        public async Task<List<DBCDRow>> FindRecords(string name, string build, string col, int val, bool single = false)
+        {
+            var rowList = new List<DBCDRow>();
+
+            var storage = await GetOrLoad(name, build);
+            if (col == "ID")
+            {
+                if (storage.TryGetValue(val, out DBCDRow row))
+                {
+                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    {
+                        string fieldName = storage.AvailableColumns[i];
+
+                        if (fieldName != col)
+                            continue;
+
+                        // Don't think FKs to arrays are possible, so only check regular value
+                        if (row[fieldName].ToString() == val.ToString())
+                        {
+                            rowList.Add(row);
+                            if (single)
+                                return rowList;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (DBCDRow row in storage.Values)
+                {
+                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    {
+                        string fieldName = storage.AvailableColumns[i];
+
+                        if (fieldName != col)
+                            continue;
+
+                        // Don't think FKs to arrays are possible, so only check regular value
+                        if (row[fieldName].ToString() == val.ToString())
+                        {
+                            rowList.Add(row);
+                            if (single)
+                                return rowList;
+                        }
+                    }
+                }
+            }
+
+            return rowList;
         }
     }
 }
