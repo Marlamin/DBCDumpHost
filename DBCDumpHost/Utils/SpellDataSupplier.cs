@@ -48,8 +48,6 @@ namespace DBCDumpHost.Utils
             if (effectIndex == null)
                 effectIndex = 1;
 
-            var spellDurationID = 0;
-
             var spellMiscRow = dbcManager.FindRecords("spellMisc", build, "SpellID", spellID, true).Result;
             if (spellMiscRow.Count == 0)
             {
@@ -57,7 +55,7 @@ namespace DBCDumpHost.Utils
                 return null;
             }
 
-            spellDurationID = (ushort)spellMiscRow[0]["DurationIndex"];
+            var spellDurationID = (ushort)spellMiscRow[0]["DurationIndex"];
 
             if (spellDurationID == 0)
             {
@@ -106,6 +104,18 @@ namespace DBCDumpHost.Utils
                 Console.WriteLine("Unable to find radius for Spell ID " + spellID + " index " + effectIndex + " radiusIndex " + radiusIndex);
                 return null;
             }
+        }
+
+        public int? SupplyMaxStacks(int spellID)
+        {
+            var spellAuraOptions = dbcManager.FindRecords("SpellAuraOptions", build, "SpellID", spellID, true).Result;
+            if (spellAuraOptions.Count == 0)
+            {
+                Console.WriteLine("Unable to find Spell ID " + spellID + " in spellAuraOptions");
+                return null;
+            }
+
+            return (ushort)spellAuraOptions[0]["CumulativeAura"];
         }
     }
 }

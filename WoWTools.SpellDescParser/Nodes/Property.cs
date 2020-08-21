@@ -10,6 +10,7 @@ namespace WoWTools.SpellDescParser
         Radius0, // SpellEffect.EffectRadiusIndex[0]
         Radius1, // SpellEffect.EffectRadiusIndex[1]
         Effect,
+        MaxStacks,  // SpellAuraOptions.CumulativeAura
         Unknown
     }
 
@@ -76,6 +77,10 @@ namespace WoWTools.SpellDescParser
                         output.Append((int)effectPoints);
                     }
     
+                    break;
+                case PropertyType.MaxStacks:
+                    var maxStacks = supplier.SupplyMaxStacks(spellID);
+                    output.Append(maxStacks == null ? "?" : maxStacks.ToString());
                     break;
                 case PropertyType.Unknown:
                     output.Append("UNKNOWN");

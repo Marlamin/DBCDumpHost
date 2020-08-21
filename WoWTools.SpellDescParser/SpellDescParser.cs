@@ -100,6 +100,8 @@ namespace WoWTools.SpellDescParser
 
             var type = PropertyType.Unknown;
 
+            var startPos = cursor;
+
             var variableIdentifier = ReadChar();
 
             switch (variableIdentifier)
@@ -116,6 +118,9 @@ namespace WoWTools.SpellDescParser
                 case 'A':
                     type = PropertyType.Radius1;
                     break;
+                case 'u':
+                    type = PropertyType.MaxStacks;
+                    break;
                 case '?': // Conditional
                 case '<':
                 case 'l':
@@ -127,7 +132,6 @@ namespace WoWTools.SpellDescParser
                 case '*': // Math
                 case '@': // External var?
                 case 'z':
-                case 'u':
                 case 'n':
                 case 'I':
                 case 'e':
