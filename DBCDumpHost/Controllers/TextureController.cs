@@ -79,6 +79,11 @@ namespace DBCDumpHost.Controllers
                         }
 
                         returnList.Add(cdiEntry.ID.ToString(), new List<uint> { (uint)cdiEntry.TextureVariationFileDataID[0], (uint)cdiEntry.TextureVariationFileDataID[1], (uint)cdiEntry.TextureVariationFileDataID[2] });
+
+                        if ((uint) cdiEntry.ParticleColorID != 0)
+                        {
+                            returnList[cdiEntry.ID.ToString()].Add((uint)cdiEntry.ParticleColorID);
+                        }
                     }
 
                     break;
