@@ -1,7 +1,5 @@
 ﻿using DBCDumpHost.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using WoWTools.SpellDescParser;
 
 namespace DBCDumpHost.Utils
@@ -25,22 +23,16 @@ namespace DBCDumpHost.Utils
             var spellEffects = dbcManager.FindRecords("SpellEffect", build, "SpellID", spellID).Result;
             if (spellEffects.Count > 0)
             {
-                var orderedEffects = spellEffects.ToDictionary(x => (int)x["EffectIndex"], x => (double)(Single)x["EffectBasePointsF"]);
+                foreach (var spellEffect in spellEffects)
+                {
+                    if ((int)spellEffect["EffectIndex"] == effectIndex - 1)
+                    {
+                        return (double)(Single)spellEffect["EffectBasePointsF"];
+                    }
+                }
+            }
 
-                if (orderedEffects.TryGetValue((int)effectIndex - 1, out var basePointsF))
-                {
-                    return basePointsF;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                // Find a better way to deal with not found effects
-                return null;
-            }
+            return null;
         }
 
         public int? SupplyDuration(int spellID, uint? effectIndex)
