@@ -58,6 +58,84 @@ namespace Tests
 
             Assert.AreEqual("Resurrects all friends within 20 yards.", sb.ToString());
         }
+
+        [TestMethod]
+        public void AuraPeriod()
+        {
+            // ID 201867 - Call of the Void
+            var spellDescParser = new SpellDescParser("Your soul is drawn into the void, dealing Shadow damage every $t1.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 201867, new FakeSupplier());
+
+            Assert.AreEqual("Your soul is drawn into the void, dealing Shadow damage every 2.", sb.ToString()); // Yes, every 2.
+        }
+
+        [TestMethod]
+        public void MaxStacks()
+        {
+            // ID 149587 - Total Time
+            var spellDescParser = new SpellDescParser("Bell Tollssss: $u1");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 149587, new FakeSupplier());
+
+            Assert.AreEqual("Bell Tollssss: 9999", sb.ToString());
+        }
+
+        [TestMethod]
+        public void ProcChargesAndNewLine()
+        {
+            // ID 35399 - Spell Reflection
+            var spellDescParser = new SpellDescParser("Magical spells will be reflected.\n $n charges.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 35399, new FakeSupplier());
+
+            Assert.AreEqual("Magical spells will be reflected.\n 4 charges.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void ChainTargets()
+        {
+            // ID 245131 - Chain Lightning
+            var spellDescParser = new SpellDescParser("Strikes an enemy with a lightning bolt that arcs to another nearby enemy. The spell affects up to $x1 targets.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 245131, new FakeSupplier());
+
+            Assert.AreEqual("Strikes an enemy with a lightning bolt that arcs to another nearby enemy. The spell affects up to 3 targets.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void MaxTargetLevel()
+        {
+            // ID 334809 - Spiritual Knowledge
+            var spellDescParser = new SpellDescParser("Experience gained from killing monsters and completing quests in the Shadowlands increased by $s1%. Lasts $d. Does not function above level $V.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 334809, new FakeSupplier());
+
+            Assert.AreEqual("Experience gained from killing monsters and completing quests in the Shadowlands increased by 5%. Lasts 1 hour. Does not function above level 60.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void MaxTargets()
+        {
+            // ID 245235 - From the Void
+            var spellDescParser = new SpellDescParser("Calls to the void, summoning $i Waning Voids.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 334809, new FakeSupplier());
+
+            Assert.AreEqual("Calls to the void, summoning 3 Waning Voids.", sb.ToString());
+        }
     }
 
     public class FakeSupplier : ISupplier
@@ -72,6 +150,10 @@ namespace Tests
             {
                 return -40;
             }
+            else if (spellID == 334809)
+            {
+                return 5;
+            }
 
             return 0;
         }
@@ -80,11 +162,15 @@ namespace Tests
         {
             if (spellID == 871)
             {
-                return 8;
+                return 8000;
             }
             else if (spellID == 2871)
             {
-                return 30;
+                return 30000;
+            }
+            else if (spellID == 334809)
+            {
+                return 3600000;
             }
 
             return 0;
@@ -98,6 +184,36 @@ namespace Tests
             }
 
             return 0;
+        }
+
+        public int? SupplyMaxStacks(int spellID)
+        {
+            return 9999;
+        }
+
+        public int? SupplyAuraPeriod(int spellID, uint? effectIndex)
+        {
+            return 2000;
+        }
+
+        public int? SupplyProcCharges(int spellID)
+        {
+            return 4;
+        }
+
+        public int? SupplyChainTargets(int spellID, uint? effectIndex)
+        {
+            return 3;
+        }
+
+        public int? SupplyMaxTargetLevel(int spellID)
+        {
+            return 60;
+        }
+
+        public int? SupplyMaxTargets(int spellID)
+        {
+            return 3;
         }
     }
 }

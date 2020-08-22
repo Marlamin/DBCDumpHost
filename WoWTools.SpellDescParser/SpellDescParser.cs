@@ -107,7 +107,7 @@ namespace WoWTools.SpellDescParser
             var variableIdentifier = ReadChar();
 
             // Is this a way to detect longer variables? 
-            if (char.IsLower(PeekChar()))
+            if (input.Length > cursor && char.IsLower(PeekChar()))
             {
                 // EC
                 // ECIX
@@ -127,12 +127,32 @@ namespace WoWTools.SpellDescParser
                 case 'd': // Duration
                     type = PropertyType.Duration;
                     break;
+                case 'i': // Max Targets (SpellTargetRestrictions.MaxTargets)
+                case 'I': // Max Targets (SpellTargetRestrictions.MaxTargets)
+                    type = PropertyType.MaxTargets;
+                    break;
+                case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
+                case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
+                    type = PropertyType.ProcCharges;
+                    break;
                 case 's': // Effect
                     type = PropertyType.Effect;
+                    break;
+                case 't': // Aura period
+                case 'T': // Aura period
+                    type = PropertyType.AuraPeriod;
                     break;
                 case 'u': // Max stacks
                 case 'U': // Max stacks
                     type = PropertyType.MaxStacks;
+                    break;
+                case 'v': // Max target level (SpellTargetRestrictions.MaxTargetLevel)
+                case 'V': // Max target level (SpellTargetRestrictions.MaxTargetLevel)
+                    type = PropertyType.MaxTargetLevel;
+                    break;
+                case 'x': // SpellEffect.EffectChainTargets
+                case 'X': // SpellEffect.EffectChainTargets
+                    type = PropertyType.ChainTargets;
                     break;
                 case 'z': // Hearthstone location
                     type = PropertyType.HearthstoneLocation;
@@ -141,17 +161,12 @@ namespace WoWTools.SpellDescParser
                 case 'b': // % chance per combo point for spell 14161. Broken in all other spells.
                 case 'B': // See above.
                 case 'c': // TODO: Investigate
-                case 'C': // Specialization conditional 1 = 1st spec, etc
                 case 'D': // Duration
                 case 'e': // "x per point"
                 case 'h': // Proc chance (SpellAuraOptions.ProcChance)
                 case 'H': // Proc chance (SpellAuraOptions.ProcChance)
-                case 'i': // Max Targets (SpellTargetRestrictions.MaxTargets)
-                case 'I': // Max Targets (SpellTargetRestrictions.MaxTargets)
                 case 'm': // TODO: Investigate
                 case 'M': // TODO: Investigate
-                case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
-                case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
                 case 'o': // TODO: Investigate
                 case 'O': // TODO: Investigate
                 case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
@@ -159,17 +174,12 @@ namespace WoWTools.SpellDescParser
                 case 'r': // Range?? TODO: Check if capital changes array index in SpellRange
                 case 'R': // Range?? TODO: Check if capital changes array index in SpellRange
                 case 'S': // EffectPoints...2? TODO: Investigate
-                case 't': // SpellEffect.AuraPeriod
-                case 'T': // SpellEffect.AuraPeriod
-                case 'v': // Max target level (SpellTargetRestrictions.MaxTargetLevel
-                case 'V': // Max target level (SpellTargetRestrictions.MaxTargetLevel
                 case 'w': // Another EffectPoints?? TODO: Investigate
-                case 'x': // SpellEffect.EffectChainTargets
-                case 'X': // SpellEffect.EffectChainTargets
                 case 'y': // Not parsed in-game?
                 // These need special handling
                 case 'g': // Gender conditional
                 case 'G': // Gender conditional
+                case 'C': // Specialization conditional 1 = 1st spec, etc
                 case 'l': // Plurality
                 case 'L': // Plurality
                 case '?': // Conditional

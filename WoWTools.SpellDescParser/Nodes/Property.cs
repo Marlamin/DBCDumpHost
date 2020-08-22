@@ -6,11 +6,16 @@ namespace WoWTools.SpellDescParser
 {
     public enum PropertyType
     {
-        Duration,
-        Radius0, // SpellEffect.EffectRadiusIndex[0]
-        Radius1, // SpellEffect.EffectRadiusIndex[1]
         Effect,
-        MaxStacks,  // SpellAuraOptions.CumulativeAura
+        Duration,
+        Radius0,                // SpellEffect.EffectRadiusIndex[0]
+        Radius1,                // SpellEffect.EffectRadiusIndex[1]
+        MaxStacks,              // SpellAuraOptions.CumulativeAura
+        AuraPeriod,             // SpellEffect.AuraPeriod
+        ProcCharges,            // SpellAuraOptions.ProcCharges
+        ChainTargets,           // SpellEffect.ChainTargets
+        MaxTargetLevel,         // SpellTargetRestrictions.MaxTargetLevel
+        MaxTargets,             // SpellTargetRestrictions.MaxTargets
         HearthstoneLocation,
         Unknown
     }
@@ -57,8 +62,24 @@ namespace WoWTools.SpellDescParser
                     output.Append(radius1 == null ? "?" : radius1.ToString());
                     break;
                 case PropertyType.Duration:
+                    // TODO: Proper time parsing?
                     var duration = supplier.SupplyDuration(spellID, index);
-                    output.Append(duration == null ? "? sec" : duration.ToString() + " sec");
+                    if (duration == null)
+                    {
+                        output.Append("?");
+                    }
+                    else
+                    {
+                        duration = duration / 1000;
+                        if (duration == 3600)
+                        {
+                            output.Append("1 hour");
+                        }
+                        else
+                        {
+                            output.Append(duration == null ? "? sec" : duration.ToString() + " sec");
+                        }
+                    }
                     break;
                 case PropertyType.Effect:
                     // TODO: If effect is negative, is it always made positive? Should this go here or in supplier?
@@ -82,6 +103,41 @@ namespace WoWTools.SpellDescParser
                 case PropertyType.MaxStacks:
                     var maxStacks = supplier.SupplyMaxStacks(spellID);
                     output.Append(maxStacks == null ? "?" : maxStacks.ToString());
+                    break;
+                case PropertyType.AuraPeriod:
+                    var auraPeriod = supplier.SupplyAuraPeriod(spellID, index);
+                    if (auraPeriod == null)
+                    {
+                        output.Append("?");
+                    }
+                    else
+                    {
+                        auraPeriod = auraPeriod / 1000;
+                        if (auraPeriod == 3600)
+                        {
+                            output.Append("1 hour");
+                        }
+                        else
+                        {
+                            output.Append(auraPeriod == null ? "?" : auraPeriod.ToString());
+                        }
+                    }
+                    break;
+                case PropertyType.ProcCharges:
+                    var procCharges = supplier.SupplyProcCharges(spellID);
+                    output.Append(procCharges == null ? "?" : procCharges.ToString());
+                    break;
+                case PropertyType.ChainTargets:
+                    var chainTargets = supplier.SupplyChainTargets(spellID, index);
+                    output.Append(chainTargets == null ? "?" : chainTargets.ToString());
+                    break;
+                case PropertyType.MaxTargetLevel:
+                    var maxTargetLevel = supplier.SupplyMaxTargetLevel(spellID);
+                    output.Append(maxTargetLevel == null ? "?" : maxTargetLevel.ToString());
+                    break;
+                case PropertyType.MaxTargets:
+                    var maxTargets = supplier.SupplyMaxTargets(spellID);
+                    output.Append(maxTargets == null ? "?" : maxTargets.ToString());
                     break;
                 case PropertyType.HearthstoneLocation:
                     output.Append("your Hearthstone location");
