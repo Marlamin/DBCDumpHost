@@ -11,6 +11,7 @@ namespace WoWTools.SpellDescParser
         Radius1, // SpellEffect.EffectRadiusIndex[1]
         Effect,
         MaxStacks,  // SpellAuraOptions.CumulativeAura
+        HearthstoneLocation,
         Unknown
     }
 
@@ -81,6 +82,9 @@ namespace WoWTools.SpellDescParser
                 case PropertyType.MaxStacks:
                     var maxStacks = supplier.SupplyMaxStacks(spellID);
                     output.Append(maxStacks == null ? "?" : maxStacks.ToString());
+                    break;
+                case PropertyType.HearthstoneLocation:
+                    output.Append("your Hearthstone location");
                     break;
                 case PropertyType.Unknown:
                     output.Append("UNKNOWN");

@@ -86,9 +86,11 @@ namespace WoWTools.SpellDescParser
 
         public INode ReadVariable()
         {
-            if (PeekChar() == '{')
+            // Special cases
+            switch (PeekChar())
             {
-                return ReadExpression();
+                case '{':
+                    return ReadExpression();
             }
 
             int? spellID = null;
@@ -104,65 +106,77 @@ namespace WoWTools.SpellDescParser
 
             var variableIdentifier = ReadChar();
 
+            // Is this a way to detect longer variables? 
+            if (char.IsLower(PeekChar()))
+            {
+                // EC
+                // ECIX
+                // PRI
+                // 
+            }
+
             switch (variableIdentifier)
             {
-                case 'd': // Duration
-                    type = PropertyType.Duration;
-                    break;
-                case 's': // Effect
-                    type = PropertyType.Effect;
-                    break;
+
                 case 'a': // Radius
                     type = PropertyType.Radius0;
                     break;
                 case 'A':
                     type = PropertyType.Radius1;
                     break;
-                case 'u':
+                case 'd': // Duration
+                    type = PropertyType.Duration;
+                    break;
+                case 's': // Effect
+                    type = PropertyType.Effect;
+                    break;
+                case 'u': // Max stacks
+                case 'U': // Max stacks
                     type = PropertyType.MaxStacks;
                     break;
+                case 'z': // Hearthstone location
+                    type = PropertyType.HearthstoneLocation;
+                    break;
+                // TODO: Implement
+                case 'b': // % chance per combo point for spell 14161. Broken in all other spells.
+                case 'B': // See above.
+                case 'c': // TODO: Investigate
+                case 'C': // Specialization conditional 1 = 1st spec, etc
+                case 'D': // Duration
+                case 'e': // "x per point"
+                case 'h': // Proc chance (SpellAuraOptions.ProcChance)
+                case 'H': // Proc chance (SpellAuraOptions.ProcChance)
+                case 'i': // Max Targets (SpellTargetRestrictions.MaxTargets)
+                case 'I': // Max Targets (SpellTargetRestrictions.MaxTargets)
+                case 'm': // TODO: Investigate
+                case 'M': // TODO: Investigate
+                case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
+                case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
+                case 'o': // TODO: Investigate
+                case 'O': // TODO: Investigate
+                case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
+                case 'q': // TODO: Investigate, broken in only spell it is used: 39794
+                case 'r': // Range?? TODO: Check if capital changes array index in SpellRange
+                case 'R': // Range?? TODO: Check if capital changes array index in SpellRange
+                case 'S': // EffectPoints...2? TODO: Investigate
+                case 't': // SpellEffect.AuraPeriod
+                case 'T': // SpellEffect.AuraPeriod
+                case 'v': // Max target level (SpellTargetRestrictions.MaxTargetLevel
+                case 'V': // Max target level (SpellTargetRestrictions.MaxTargetLevel
+                case 'w': // Another EffectPoints?? TODO: Investigate
+                case 'x': // SpellEffect.EffectChainTargets
+                case 'X': // SpellEffect.EffectChainTargets
+                case 'y': // Not parsed in-game?
+                // These need special handling
+                case 'g': // Gender conditional
+                case 'G': // Gender conditional
+                case 'l': // Plurality
+                case 'L': // Plurality
                 case '?': // Conditional
-                case '<':
-                case 'l':
-                case 't':
-                case 'o':
-                case 'm':
-                case 'M':
+                case '<': // Variable
                 case '/': // Math
                 case '*': // Math
-                case '@': // External var?
-                case 'z':
-                case 'n':
-                case 'I':
-                case 'e':
-                case 'h':
-                case 'r':
-                case 'g':
-                case 'x':
-                case 'i':
-                case 'L':
-                case 'b':
-                case 'T':
-                case 'w':
-                case 'p':
-                case 'D':
-                case 'G':
-                case 'v':
-                case 'q':
-                case 'R':
-                case 'U':
-                case 'H':
-                case 'S':
-                case 'c':
-                case 'C':
-                case 'N':
-                case 'P':
-                case 'O':
-                case 'V':
-                case 'E':
-                case 'y':
-                case 'B':
-                case 'X':
+                case '@': // External var
                     type = PropertyType.Unknown;
                     break;
             }
@@ -174,6 +188,7 @@ namespace WoWTools.SpellDescParser
                 index = ReadUInt();
             }
 
+            // TODO: How are new lines handled???
             if (type == PropertyType.Unknown)
                 return new PlainText("$" + spellID + variableIdentifier + index);
 
