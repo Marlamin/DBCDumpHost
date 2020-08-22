@@ -75,7 +75,7 @@ namespace DBCDumpHost.Utils
                 return null;
             }
 
-            return (int)spellTargetRestrictions[0]["MaxTargets"];
+            return (byte)spellTargetRestrictions[0]["MaxTargets"];
         }
 
         public int? SupplyProcCharges(int spellID)
@@ -129,6 +129,10 @@ namespace DBCDumpHost.Utils
 
             // $a is for first array entry, $A for second
             var spellRadiusID = radiusIndexArray[radiusIndex];
+
+            // TODO: Temp fix, something wrong here.
+            if (spellRadiusID == 0)
+                spellRadiusID = radiusIndexArray[1];
 
             var spellRadiusDB = dbcManager.GetOrLoad("SpellRadius", build).Result;
             if (spellRadiusDB.TryGetValue(spellRadiusID, out var radiusRow))
