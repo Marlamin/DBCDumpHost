@@ -138,11 +138,16 @@ namespace DBCDumpHost.Controllers
             }
             else
             {
-                var itemDelay = (ushort)itemSparseEntry["ItemDelay"] / 1000f;
-                var targetDamageDB = GetDamageDBByItemSubClass((byte)itemEntry["SubclassID"], (itemSparseEntry.FieldAs<int[]>("Flags")[1] & 0x200) == 0x200);
-
+                result.HasSparse = true;
                 result.ItemLevel = (ushort)itemSparseEntry["ItemLevel"];
                 result.OverallQualityID = (byte)itemSparseEntry["OverallQualityID"];
+                result.Name = (string)itemSparseEntry["Display_lang"];
+                result.FlavorText = (string)itemSparseEntry["Description_lang"];
+                result.ExpansionID = (byte)itemSparseEntry["ExpansionID"];
+                result.RequiredLevel = (sbyte)itemSparseEntry["RequiredLevel"];
+
+                var itemDelay = (ushort)itemSparseEntry["ItemDelay"] / 1000f;
+                var targetDamageDB = GetDamageDBByItemSubClass((byte)itemEntry["SubclassID"], (itemSparseEntry.FieldAs<int[]>("Flags")[1] & 0x200) == 0x200);
 
                 var statTypes = itemSparseEntry.FieldAs<sbyte[]>("StatModifier_bonusStat");
                 if (statTypes.Length > 0 && statTypes.Any(x => x != -1) && statTypes.Any(x => x != 0))
@@ -187,21 +192,23 @@ namespace DBCDumpHost.Controllers
                 }
 
                 var damageRecord = await dbcManager.FindRecords(targetDamageDB, build, "ItemLevel", result.ItemLevel);
-                var itemDamage = damageRecord[0].FieldAs<float[]>("Quality")[result.OverallQualityID];
+
+                var quality = result.OverallQualityID;
+                if (quality == 7) // Heirloom == Rare
+                    quality = 3;
+
+                if (quality == 5) // Legendary = Epic
+                    quality = 4;
+
+                var itemDamage = damageRecord[0].FieldAs<float[]>("Quality")[quality];
                 var dmgVariance = (float)itemSparseEntry["DmgVariance"];
 
-                result.HasSparse = true;
-                result.Name = (string)itemSparseEntry["Display_lang"];
-                result.FlavorText = (string)itemSparseEntry["Description_lang"];
-                result.ExpansionID = (byte)itemSparseEntry["ExpansionID"];
-                result.RequiredLevel = (sbyte)itemSparseEntry["RequiredLevel"];
-
-                result.MinDamage = Math.Floor(itemDamage * itemDelay * (1 - dmgVariance * 0.5)).ToString();
-                result.MaxDamage = Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString();
 
                 // Use . as decimal separator
                 NumberFormatInfo nfi = new NumberFormatInfo();
                 nfi.NumberDecimalSeparator = ".";
+                result.MinDamage = Math.Floor(itemDamage * itemDelay * (1 - dmgVariance * 0.5)).ToString(nfi);
+                result.MaxDamage = Math.Floor(itemDamage * itemDelay * (1 + dmgVariance * 0.5)).ToString(nfi);
                 result.Speed = itemDelay.ToString("F2", nfi);
                 result.DPS = itemDamage.ToString("F2", nfi);
             }
