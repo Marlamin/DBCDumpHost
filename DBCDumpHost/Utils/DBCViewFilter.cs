@@ -210,7 +210,7 @@ namespace DBCDumpHost.Utils
 
         private static Predicate<object> CreateRegexPredicate(string pattern)
         {
-            var re = new Regex(pattern);
+            var re = new Regex(pattern, RegexOptions.IgnoreCase);
             return (field) => re.IsMatch(field.ToString());
         }
 
