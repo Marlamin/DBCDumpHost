@@ -132,7 +132,7 @@ namespace DBCDumpHost.Utils
 
             // TODO: Temp fix, something wrong here.
             if (spellRadiusID == 0)
-                spellRadiusID = radiusIndexArray[1];
+                spellRadiusID = radiusIndexArray[radiusIndex == 0 ? 1 : 0];
 
             var spellRadiusDB = dbcManager.GetOrLoad("SpellRadius", build).Result;
             if (spellRadiusDB.TryGetValue(spellRadiusID, out var radiusRow))
