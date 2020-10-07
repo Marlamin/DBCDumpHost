@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace WoWTools.SpellDescParser
 {
@@ -106,24 +107,25 @@ namespace WoWTools.SpellDescParser
 
             var variableIdentifier = ReadChar();
 
-            // Is this a way to detect longer variables? 
-            if (input.Length > cursor && char.IsLower(PeekChar()))
-            {
-                // EC
-                // ECIX
-                // PRI
-                // 
-            }
+            // Is this a way to detect longer variables? -- No
+            //while (input.Length > cursor && (char.IsLetter(PeekChar()) || PeekChar() == '<' || PeekChar() == '>' || PeekChar() == '@'))
+            //{
+            //    variableIdentifier += ReadChar();
+
+            //    // Plurality identifiers are immediately followed by the singular form
+            //    if (variableIdentifier.ToLower() == "l" || variableIdentifier.ToLower() == "g")
+            //        break;
+            //}
 
             switch (variableIdentifier)
             {
-
                 case 'a': // Radius
                     type = PropertyType.Radius0;
                     break;
                 case 'A':
                     type = PropertyType.Radius1;
                     break;
+                case 'D': // Duration
                 case 'd': // Duration
                     type = PropertyType.Duration;
                     break;
@@ -134,6 +136,10 @@ namespace WoWTools.SpellDescParser
                 case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
                 case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
                     type = PropertyType.ProcCharges;
+                    break;
+                case 'r': // SpellRange::ID
+                case 'R': // SpellRange::ID
+                    type = PropertyType.Range;
                     break;
                 case 's': // Effect
                     type = PropertyType.Effect;
@@ -161,8 +167,7 @@ namespace WoWTools.SpellDescParser
                 case 'b': // % chance per combo point for spell 14161. Broken in all other spells.
                 case 'B': // See above.
                 case 'c': // TODO: Investigate
-                case 'D': // Duration
-                case 'e': // "x per point"
+                case 'e': // 'x per point' SpellEffect.EffectAmplitude
                 case 'h': // Proc chance (SpellAuraOptions.ProcChance)
                 case 'H': // Proc chance (SpellAuraOptions.ProcChance)
                 case 'm': // TODO: Investigate
@@ -171,8 +176,6 @@ namespace WoWTools.SpellDescParser
                 case 'O': // TODO: Investigate
                 case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
                 case 'q': // TODO: Investigate, broken in only spell it is used: 39794
-                case 'r': // Range?? TODO: Check if capital changes array index in SpellRange
-                case 'R': // Range?? TODO: Check if capital changes array index in SpellRange
                 case 'S': // EffectPoints...2? TODO: Investigate
                 case 'w': // Another EffectPoints?? TODO: Investigate
                 case 'y': // Not parsed in-game?
@@ -188,6 +191,9 @@ namespace WoWTools.SpellDescParser
                 case '*': // Math
                 case '@': // External var
                     type = PropertyType.Unknown;
+                    break;
+                default:
+                    Console.WriteLine('Unhandled variable identifier: ' + variableIdentifier);
                     break;
             }
 

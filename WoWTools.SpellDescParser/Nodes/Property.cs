@@ -16,6 +16,7 @@ namespace WoWTools.SpellDescParser
         ChainTargets,           // SpellEffect.ChainTargets
         MaxTargetLevel,         // SpellTargetRestrictions.MaxTargetLevel
         MaxTargets,             // SpellTargetRestrictions.MaxTargets
+        Range,                  // SpellRange::ID
         HearthstoneLocation,
         Unknown
     }
