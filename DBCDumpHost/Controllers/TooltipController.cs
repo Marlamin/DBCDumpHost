@@ -44,6 +44,7 @@ namespace DBCDumpHost.Controllers
     {
         public int SpellID { get; set; }
         public string Name { get; set; }
+        public string SubText { get; set; }
         public string Description { get; set; }
         public int IconFileDataID { get; set; }
     }
@@ -305,8 +306,10 @@ namespace DBCDumpHost.Controllers
         }
 
         [HttpGet("spell/{SpellID}")]
-        public async Task<IActionResult> GetSpellTooltip(int spellID, string build)
+        public async Task<IActionResult> GetSpellTooltip(int spellID, string build, byte level = 60, sbyte difficulty = -1, short mapID = -1)
         {
+            // If difficulty is -1 fall back to Normal
+
             var result = new TTSpell();
             result.SpellID = spellID;
 
@@ -323,7 +326,7 @@ namespace DBCDumpHost.Controllers
             var spellDB = await dbcManager.GetOrLoad("Spell", build);
             if (spellDB.TryGetValue(spellID, out var spellRow))
             {
-                var dataSupplier = new SpellDataSupplier(dbcManager, build);
+                var dataSupplier = new SpellDataSupplier(dbcManager, build, level, difficulty, mapID);
 
                 if ((string)spellRow["Description_lang"] != string.Empty)
                 {
@@ -334,6 +337,11 @@ namespace DBCDumpHost.Controllers
                     spellDescParser.root.Format(sb, spellID, dataSupplier);
 
                     result.Description = sb.ToString();
+                }
+
+                if ((string)spellRow["NameSubtext_Lang"] != string.Empty)
+                {
+                    result.SubText = (string)spellRow["NameSubtext_Lang"];
                 }
             }
 

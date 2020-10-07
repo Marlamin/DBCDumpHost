@@ -65,7 +65,7 @@ namespace DBCDumpHost.Controllers
             {
                 if (formFile.Length > 0)
                 {
-                    if (formFile.Length > 10485760)
+                    if (formFile.Length > 26214400) // 25MB
                         return BadRequest("File too large!");
 
                     var filePath = Path.GetTempFileName();
@@ -105,8 +105,8 @@ namespace DBCDumpHost.Controllers
             {
                 if (formFile.Length > 0)
                 {
-                    if (formFile.Length > 52428800) // 50 MB
-                        return BadRequest("File too large!");
+                    if (formFile.Length > 68157440) // 65 MB
+                        return BadRequest("ZIP too large!");
 
                     var filePath = Path.GetTempFileName();
 

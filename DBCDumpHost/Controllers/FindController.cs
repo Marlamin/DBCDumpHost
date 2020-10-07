@@ -31,7 +31,7 @@ namespace DBCDumpHost.Controllers
         [HttpGet("{name}")]
         public async Task<List<Dictionary<string, string>>> Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true)
         {
-            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
+            Logger.WriteLine("Finding results for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
 
             var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
 

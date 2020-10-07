@@ -2,6 +2,7 @@
 using DBCDumpHost.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using WoWTools.SpellDescParser;
 
 namespace DBCDumpHost.Utils
@@ -10,11 +11,18 @@ namespace DBCDumpHost.Utils
     {
         private DBCManager dbcManager;
         private string build;
+        private byte level;
+        private sbyte difficulty;
+        private short mapID;
+        private sbyte expansion = -2;
 
-        public SpellDataSupplier(DBCManager dbcManager, string build)
+        public SpellDataSupplier(DBCManager dbcManager, string build, byte level = 60, sbyte difficulty = -1, short mapID = -1)
         {
             this.build = build;
             this.dbcManager = dbcManager;
+            this.level = level;
+            this.difficulty = difficulty;
+            this.mapID = mapID;
         }
 
         public DBCDRow? SupplyEffectRow(int spellID, uint? effectIndex)
@@ -26,6 +34,7 @@ namespace DBCDumpHost.Utils
             {
                 foreach (var spellEffect in spellEffects)
                 {
+                    // TODO: LINQ as well as proper fallbacks to Difficulty::FallbackDifficultyID if SpellEffect does not have DifficultyID for this EffectIndex
                     if ((int)spellEffect["EffectIndex"] == effectIndex - 1 && (int)spellEffect["DifficultyID"] == 0)
                     {
                         return spellEffect;
@@ -36,10 +45,37 @@ namespace DBCDumpHost.Utils
             return null;
         }
 
+        // Stat/Effect Point parsing based on work done by simc & https://github.com/TrinityCore/SpellWork 
         public double? SupplyEffectPoint(int spellID, uint? effectIndex)
         {
             var spellEffect = SupplyEffectRow(spellID, effectIndex);
-            return (float?) spellEffect?["EffectBasePointsF"];
+
+            if (spellEffect == null)
+                return null;
+
+            var effectPoints = (float)spellEffect["EffectBasePointsF"];
+
+            if ((float)spellEffect["Coefficient"] == 0.0f)
+            {
+                // TODO: Not yet implemented
+                return null;
+            }
+            else
+            {
+                var miscValue = spellEffect.FieldAs<int[]>("EffectMiscValue");
+
+                var expectedStatRows = dbcManager.FindRecords("ExpectedStat", build, "Lvl", level).Result;
+                var expectedStatRow = expectedStatRows.Where(x => (int)x["ExpansionID"] == this.expansion);
+
+                var expectedStatType =
+                    TooltipUtils.GetExpectedStatTypeBySpellEffect((int)spellEffect["Effect"], (short)spellEffect["EffectAura"], miscValue[0]);
+                if (expectedStatType != TooltipUtils.ExpectedStatType.None)
+                {
+                    
+                }
+            }
+
+            return effectPoints;
         }
 
         public int? SupplyAuraPeriod(int spellID, uint? effectIndex)

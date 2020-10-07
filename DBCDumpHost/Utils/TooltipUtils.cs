@@ -1,6 +1,7 @@
 ﻿using DBCDumpHost.Controllers;
 using DBCDumpHost.Services;
 using System;
+using System.Diagnostics;
 
 namespace DBCDumpHost.Utils
 {
@@ -103,6 +104,17 @@ namespace DBCDumpHost.Utils
             CR_STURDINESS = 64
         }
 
+        public enum ExpectedStatType : byte
+        {
+            PlayerHealth = 1,
+            PlayerMana = 4,
+            PlayerPrimaryStat = 5,
+            PlayerSecondaryStat = 6, 
+            ArmorConstant = 7,
+            None = 8,
+            CreatureSpellDamage = 9
+        }
+
         public static bool IsStatCombatRating(sbyte StatTypeID)
         {
             switch ((ItemStatType)StatTypeID)
@@ -130,6 +142,88 @@ namespace DBCDumpHost.Utils
                     return true;
                 default:
                     return false;
+            }
+        }
+
+        public static ExpectedStatType GetExpectedStatTypeBySpellEffect(int effectType, int effectAuraType, int effectMiscValue0)
+        {
+            switch (effectType)
+            {
+                case 10:
+                case 75:
+                    return ExpectedStatType.PlayerHealth;
+                case 8:
+                    return ExpectedStatType.PlayerMana;
+                case 2:
+                case 7:
+                case 9:
+                case 17:
+                case 58:
+                    return ExpectedStatType.CreatureSpellDamage;
+                case 30:
+                case 62:
+                    return effectMiscValue0 == 0 ? ExpectedStatType.PlayerMana : ExpectedStatType.None;
+                case 6:
+                case 27:
+                case 35:
+                case 65:
+                case 119:
+                case 128:
+                case 129:
+                case 143:
+                case 174:
+                case 202:
+                    switch(effectAuraType)
+                    {
+                        case 8:
+                        case 14:
+                        case 34:
+                        case 69:
+                        case 84:
+                        case 97:
+                        case 115:
+                        case 135:
+                        case 161:
+                        case 230:
+                        case 250:
+                        case 301:
+                            return ExpectedStatType.PlayerHealth;
+                        case 64:
+                            return ExpectedStatType.PlayerMana;
+                        case 29:
+                        case 99:
+                        case 124:
+                            return ExpectedStatType.PlayerPrimaryStat;
+                        case 189:
+                            return ExpectedStatType.PlayerSecondaryStat;
+                        case 22:
+                        case 83:
+                        case 123:
+                        case 465:
+                            return ExpectedStatType.ArmorConstant;
+                        case 3:
+                        case 13:
+                        case 15:
+                        case 43:
+                        case 53:
+                        case 59:
+                        case 62:
+                        case 102:
+                        case 131:
+                        case 180:
+                            return ExpectedStatType.CreatureSpellDamage;
+                        case 24:
+                        case 35:
+                        case 73:
+                        case 85:
+                        case 162:
+                        case 418:
+                            return effectMiscValue0 == 0 ? ExpectedStatType.PlayerMana : ExpectedStatType.None;
+                        default:
+                            return ExpectedStatType.None;
+                    }
+                default:
+                    return ExpectedStatType.None;
             }
         }
 
