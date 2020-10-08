@@ -7,25 +7,30 @@ namespace WoWTools.SpellDescParser
     public enum PropertyType
     {
         Effect,
+        EffectAmplitude,        // SpellEffect.EffectAmplitude
         Duration,
         Radius0,                // SpellEffect.EffectRadiusIndex[0]
         Radius1,                // SpellEffect.EffectRadiusIndex[1]
         MaxStacks,              // SpellAuraOptions.CumulativeAura
         AuraPeriod,             // SpellEffect.AuraPeriod
         ProcCharges,            // SpellAuraOptions.ProcCharges
+        ProcChance,             // SpellAuraOptions.ProcChance
         ChainTargets,           // SpellEffect.ChainTargets
         MaxTargetLevel,         // SpellTargetRestrictions.MaxTargetLevel
         MaxTargets,             // SpellTargetRestrictions.MaxTargets
-        Range,                  // SpellRange::ID
+        MinRange,               // SpellRange::ID
+        MaxRange,               // SpellRange::ID
         HearthstoneLocation,
+        SpellName,
+        SpellDescription,
         Unknown
     }
 
     public class Property : INode
     {
-        readonly PropertyType propertyType;
+        public readonly PropertyType propertyType;
         readonly uint? index;
-        readonly int? overrideSpellID;
+        public readonly int? overrideSpellID;
         
         public Property(PropertyType propertyType, uint? index, int? spellID)
         {
@@ -128,6 +133,10 @@ namespace WoWTools.SpellDescParser
                     var procCharges = supplier.SupplyProcCharges(spellID);
                     output.Append(procCharges == null ? "?" : procCharges.ToString());
                     break;
+                case PropertyType.ProcChance:
+                    var procChance = supplier.SupplyProcChance(spellID);
+                    output.Append(procChance == null ? "?" : procChance.ToString());
+                    break;
                 case PropertyType.ChainTargets:
                     var chainTargets = supplier.SupplyChainTargets(spellID, index);
                     output.Append(chainTargets == null ? "?" : chainTargets.ToString());
@@ -140,8 +149,27 @@ namespace WoWTools.SpellDescParser
                     var maxTargets = supplier.SupplyMaxTargets(spellID);
                     output.Append(maxTargets == null ? "?" : maxTargets.ToString());
                     break;
+                case PropertyType.MinRange:
+                    var minRange = supplier.SupplyMinRange(spellID);
+                    output.Append(minRange == null ? "?" : minRange.ToString());
+                    break;
+                case PropertyType.MaxRange:
+                    var maxRange = supplier.SupplyMaxRange(spellID);
+                    output.Append(maxRange == null ? "?" : maxRange.ToString());
+                    break;
+                case PropertyType.EffectAmplitude:
+                    var effectAmplitude = supplier.SupplyEffectAmplitude(spellID, index);
+                    output.Append(effectAmplitude == null ? "?" : effectAmplitude.ToString());
+                    break;
+                case PropertyType.SpellName:
+                    var spellName = supplier.SupplySpellName(spellID);
+                    output.Append(spellName == null ? "UNKNOWN SPELL" : spellName);
+                    break;
                 case PropertyType.HearthstoneLocation:
                     output.Append("your Hearthstone location");
+                    break;
+                case PropertyType.SpellDescription:
+                    output.Append("$@spelldesc" + spellID);
                     break;
                 case PropertyType.Unknown:
                     output.Append("UNKNOWN");

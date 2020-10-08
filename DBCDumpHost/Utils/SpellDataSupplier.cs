@@ -58,7 +58,7 @@ namespace DBCDumpHost.Utils
             if ((float)spellEffect["Coefficient"] == 0.0f)
             {
                 // TODO: Not yet implemented
-                return null;
+                return effectPoints;
             }
             else
             {
@@ -76,6 +76,12 @@ namespace DBCDumpHost.Utils
             }
 
             return effectPoints;
+        }
+
+        public int? SupplyEffectAmplitude(int spellID, uint? effectIndex)
+        {
+            var spellEffect = SupplyEffectRow(spellID, effectIndex);
+            return (int?)spellEffect?["EffectAmplitude"];
         }
 
         public int? SupplyAuraPeriod(int spellID, uint? effectIndex)
@@ -190,6 +196,89 @@ namespace DBCDumpHost.Utils
             }
 
             return (ushort)spellAuraOptions[0]["CumulativeAura"];
+        }
+
+        public int? SupplyProcChance(int spellID)
+        {
+            var spellAuraOptions = dbcManager.FindRecords("SpellAuraOptions", build, "SpellID", spellID, true).Result;
+            if (spellAuraOptions.Count == 0)
+            {
+                Console.WriteLine("Unable to find Spell ID " + spellID + " in spellAuraOptions");
+                return null;
+            }
+
+            return (byte)spellAuraOptions[0]["ProcChance"];
+        }
+
+        public int? SupplyMinRange(int spellID)
+        {
+            var spellMiscRow = dbcManager.FindRecords("spellMisc", build, "SpellID", spellID, true).Result;
+            if (spellMiscRow.Count == 0)
+            {
+                Console.WriteLine("Unable to find Spell ID " + spellID + " in spell misc");
+                return null;
+            }
+
+            var spellRangeID = (ushort)spellMiscRow[0]["DurationIndex"];
+            if (spellRangeID == 0)
+            {
+                Console.WriteLine("Unable to find range for Spell ID " + spellID);
+                return null;
+            }
+
+            var spellRangeDB = dbcManager.GetOrLoad("SpellRange", build).Result;
+            if (spellRangeDB.TryGetValue(spellRangeID, out var rangeRow))
+            {
+                var rangeMin = rangeRow.FieldAs<float[]>("RangeMin");
+
+                if ((int) rangeMin[0] == 0)
+                    return SupplyMaxRange(spellID);
+
+                return (int)rangeMin[0];
+            }
+
+            return null;
+        }
+
+        public int? SupplyMaxRange(int spellID)
+        {
+            var spellMiscRow = dbcManager.FindRecords("spellMisc", build, "SpellID", spellID, true).Result;
+            if (spellMiscRow.Count == 0)
+            {
+                Console.WriteLine("Unable to find Spell ID " + spellID + " in spell misc");
+                return null;
+            }
+
+            var spellRangeID = (ushort)spellMiscRow[0]["DurationIndex"];
+            if (spellRangeID == 0)
+            {
+                Console.WriteLine("Unable to find range for Spell ID " + spellID);
+                return null;
+            }
+            
+            var spellRangeDB = dbcManager.GetOrLoad("SpellRange", build).Result;
+            if (spellRangeDB.TryGetValue(spellRangeID, out var rangeRow))
+            {
+                var rangeMax = rangeRow.FieldAs<float[]>("RangeMax");
+
+                if ((int)rangeMax[0] == 0)
+                    return SupplyMinRange(spellID);
+
+                return (int)rangeMax[0];
+            }
+
+            return null;
+        }
+
+        public string? SupplySpellName(int spellID)
+        {
+            var spellNameDB = dbcManager.GetOrLoad("SpellName", build).Result;
+            if (spellNameDB.TryGetValue(spellID, out var spellNameRow))
+            {
+                return (string)spellNameRow["Name_lang"];
+            }
+
+            return null;
         }
     }
 }

@@ -136,6 +136,59 @@ namespace Tests
 
             Assert.AreEqual("Calls to the void, summoning 3 Waning Voids.", sb.ToString());
         }
+        
+        [TestMethod]
+        public void ProcChance()
+        {
+            // ID 3424 - Tainted Howl
+            var spellDescParser = new SpellDescParser("Gives nearby allies $h% chance to poison an enemy on hit.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 3424, new FakeSupplier());
+
+            Assert.AreEqual("Gives nearby allies 35% chance to poison an enemy on hit.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void Range()
+        {
+            // ID 340484 - Allaying
+            var spellDescParser = new SpellDescParser("Puts fallen anima-starved creatures to rest within $r yds.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 340484, new FakeSupplier());
+
+            Assert.AreEqual("Puts fallen anima-starved creatures to rest within 20 yds.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void EffectAmplitude()
+        {
+            // ID 322516 - Singe Mana
+            var spellDescParser = new SpellDescParser("Hits an enemy with an anti-mana bolt. For each point of mana consumed by the bolt, the target takes $e1 damage.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 322516, new FakeSupplier());
+
+            Assert.AreEqual("Hits an enemy with an anti-mana bolt. For each point of mana consumed by the bolt, the target takes 3 damage.", sb.ToString());
+        }
+
+        [TestMethod]
+        public void ExternalName()
+        {
+            // ID 50464 - Nourish
+            var spellDescParser = new SpellDescParser("Receives triple bonus from $@spellname77495.");
+            spellDescParser.Parse();
+
+            var sb = new StringBuilder();
+            spellDescParser.root.Format(sb, 50464, new FakeSupplier());
+
+            Assert.AreEqual("Receives triple bonus from Mastery: Harmony.", sb.ToString());
+        }
+
     }
 
     public class FakeSupplier : ISupplier
@@ -214,6 +267,56 @@ namespace Tests
         public int? SupplyMaxTargets(int spellID)
         {
             return 3;
+        }
+
+        public int? SupplyProcChance(int spellID)
+        {
+            if (spellID == 3424)
+            {
+                return 35;
+            }
+
+            return null;
+        }
+
+        public int? SupplyMinRange(int spellID)
+        {
+            if (spellID == 340484)
+            {
+                return 20;
+            }
+
+            return null;
+        }
+
+        public int? SupplyMaxRange(int spellID)
+        {
+            if (spellID == 340484)
+            {
+                return 20;
+            }
+
+            return null;
+        }
+
+        public int? SupplyEffectAmplitude(int spellID, uint? effectIndex)
+        {
+            if (spellID == 322516)
+            {
+                return 3;
+            }
+
+            return null;
+        }
+
+        public string? SupplySpellName(int spellID)
+        {
+            if (spellID == 77495)
+            {
+                return "Mastery: Harmony";
+            }
+
+            return null;
         }
     }
 }

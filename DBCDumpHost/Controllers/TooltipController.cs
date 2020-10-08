@@ -337,11 +337,29 @@ namespace DBCDumpHost.Controllers
                     spellDescParser.root.Format(sb, spellID, dataSupplier);
 
                     result.Description = sb.ToString();
+
+                    // Check for PropertyType.SpellDescription nodes and feed those into separate parsers (make sure to add a recursion limit :) )
+                    foreach (var node in spellDescParser.root.nodes)
+                    {
+                        if (node is Property property && property.propertyType == PropertyType.SpellDescription && property.overrideSpellID != null)
+                        {
+                            if (spellDB.TryGetValue((int)property.overrideSpellID, out var externalSpellRow))
+                            {
+                                var externalSpellDescParser = new SpellDescParser((string)externalSpellRow["Description_lang"]);
+                                externalSpellDescParser.Parse();
+
+                                var externalSB = new StringBuilder();
+                                externalSpellDescParser.root.Format(externalSB, (int)property.overrideSpellID, dataSupplier);
+
+                                result.Description = result.Description.Replace("$@spelldesc" + property.overrideSpellID, externalSB.ToString());
+                            }
+                        }
+                    }
                 }
 
-                if ((string)spellRow["NameSubtext_Lang"] != string.Empty)
+                if ((string)spellRow["NameSubtext_lang"] != string.Empty)
                 {
-                    result.SubText = (string)spellRow["NameSubtext_Lang"];
+                    result.SubText = (string)spellRow["NameSubtext_lang"];
                 }
             }
 

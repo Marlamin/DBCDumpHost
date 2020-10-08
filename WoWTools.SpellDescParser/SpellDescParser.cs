@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WoWTools.SpellDescParser
 {
     public class SpellDescParser
     {
-        private string input;
+        private readonly string input;
         private int cursor;
         public Root root;
 
@@ -108,14 +109,54 @@ namespace WoWTools.SpellDescParser
             var variableIdentifier = ReadChar();
 
             // Is this a way to detect longer variables? -- No
-            //while (input.Length > cursor && (char.IsLetter(PeekChar()) || PeekChar() == '<' || PeekChar() == '>' || PeekChar() == '@'))
-            //{
-            //    variableIdentifier += ReadChar();
 
-            //    // Plurality identifiers are immediately followed by the singular form
-            //    if (variableIdentifier.ToLower() == "l" || variableIdentifier.ToLower() == "g")
-            //        break;
-            //}
+            // Broken long bois
+            /*
+             *  $@seplldesc
+             *  $@speldesc
+             *  $@@spelldesc
+             */
+
+            var multipleCharacterVariable = variableIdentifier.ToString();
+
+            while (input.Length > cursor && (char.IsLetter(PeekChar()) || PeekChar() == '<' || PeekChar() == '>' || PeekChar() == '@'))
+            {
+                if (multipleCharacterVariable.ToLower() == "l" || multipleCharacterVariable.ToLower() == "g")
+                    break;
+
+                multipleCharacterVariable += ReadChar();
+            }
+
+            if (multipleCharacterVariable.Trim().Length > 1)
+            {
+                switch (multipleCharacterVariable)
+                {
+                    case "@spellname":
+                        type = PropertyType.SpellName;
+                        if (char.IsDigit(PeekChar()))
+                        {
+                            spellID = ReadInt();
+                        }
+                        break;
+                    case "@spelldesc":
+                        type = PropertyType.SpellDescription;
+                        if (char.IsDigit(PeekChar()))
+                        {
+                            spellID = ReadInt();
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("Unhandled multichar variable identifier: " + variableIdentifier);
+                        break;
+                }
+
+                if (type == PropertyType.Unknown)
+                {
+                    return new PlainText("$" + multipleCharacterVariable);
+                }
+
+                return new Property(type, null, spellID);
+            }
 
             switch (variableIdentifier)
             {
@@ -129,17 +170,27 @@ namespace WoWTools.SpellDescParser
                 case 'd': // Duration
                     type = PropertyType.Duration;
                     break;
+                case 'E': // 'x per point' SpellEffect.EffectAmplitude
+                case 'e': // 'x per point' SpellEffect.EffectAmplitude
+                    type = PropertyType.EffectAmplitude;
+                    break;
                 case 'i': // Max Targets (SpellTargetRestrictions.MaxTargets)
                 case 'I': // Max Targets (SpellTargetRestrictions.MaxTargets)
                     type = PropertyType.MaxTargets;
+                    break;
+                case 'h': // Proc chance (SpellAuraOptions.ProcChance)
+                case 'H': // Proc chance (SpellAuraOptions.ProcChance)
+                    type = PropertyType.ProcChance;
                     break;
                 case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
                 case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
                     type = PropertyType.ProcCharges;
                     break;
                 case 'r': // SpellRange::ID
+                    type = PropertyType.MinRange;
+                    break;
                 case 'R': // SpellRange::ID
-                    type = PropertyType.Range;
+                    type = PropertyType.MaxRange;
                     break;
                 case 's': // Effect
                     type = PropertyType.Effect;
@@ -167,9 +218,6 @@ namespace WoWTools.SpellDescParser
                 case 'b': // % chance per combo point for spell 14161. Broken in all other spells.
                 case 'B': // See above.
                 case 'c': // TODO: Investigate
-                case 'e': // 'x per point' SpellEffect.EffectAmplitude
-                case 'h': // Proc chance (SpellAuraOptions.ProcChance)
-                case 'H': // Proc chance (SpellAuraOptions.ProcChance)
                 case 'm': // TODO: Investigate
                 case 'M': // TODO: Investigate
                 case 'o': // TODO: Investigate
@@ -177,8 +225,10 @@ namespace WoWTools.SpellDescParser
                 case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
                 case 'q': // TODO: Investigate, broken in only spell it is used: 39794
                 case 'S': // EffectPoints...2? TODO: Investigate
-                case 'w': // Another EffectPoints?? TODO: Investigate
+                case 'w': // Another EffectBasePoints?? TODO: Investigate 118078
                 case 'y': // Not parsed in-game?
+                case 'f': // SpellEffect.EffectChainAmplitude (expression only)
+                case 'F': // SpellEffect.EffectChainAmplitude (expression only)
                 // These need special handling
                 case 'g': // Gender conditional
                 case 'G': // Gender conditional
@@ -193,7 +243,7 @@ namespace WoWTools.SpellDescParser
                     type = PropertyType.Unknown;
                     break;
                 default:
-                    Console.WriteLine('Unhandled variable identifier: ' + variableIdentifier);
+                    Console.WriteLine("Unhandled variable identifier: " + variableIdentifier);
                     break;
             }
 

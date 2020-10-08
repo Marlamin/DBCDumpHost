@@ -7,7 +7,7 @@ namespace WoWTools.SpellDescParser
 {
     public class Root : INode
     {
-        List<INode> nodes;
+        public List<INode> nodes;
 
         public Root(List<INode> nodes)
         {
