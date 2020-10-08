@@ -21,8 +21,14 @@ namespace WoWTools.SpellDescParser
         MinRange,               // SpellRange::ID
         MaxRange,               // SpellRange::ID
         HearthstoneLocation,
+
+        // $@variables
         SpellName,
         SpellDescription,
+        SpellIcon,
+        SpellTooltip,
+
+        LootSpec,
         Unknown
     }
 
@@ -170,6 +176,9 @@ namespace WoWTools.SpellDescParser
                     break;
                 case PropertyType.SpellDescription:
                     output.Append("$@spelldesc" + spellID);
+                    break;
+                case PropertyType.LootSpec:
+                    output.Append("<loot specialization>");
                     break;
                 case PropertyType.Unknown:
                     output.Append("UNKNOWN");

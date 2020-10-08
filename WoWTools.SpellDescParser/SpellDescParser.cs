@@ -57,7 +57,7 @@ namespace WoWTools.SpellDescParser
             return input[cursor++];
         }
 
-        public int ReadInt()
+        public int? ReadInt()
         {
             var stringBuffer = "";
 
@@ -66,10 +66,15 @@ namespace WoWTools.SpellDescParser
                 stringBuffer += ReadChar();
             }
 
-            return int.Parse(stringBuffer);
+            if (int.TryParse(stringBuffer, out int result))
+            {
+                return result;
+            }
+
+            return null;
         }
 
-        public uint ReadUInt()
+        public uint? ReadUInt()
         {
             var stringBuffer = "";
 
@@ -78,7 +83,12 @@ namespace WoWTools.SpellDescParser
                 stringBuffer += ReadChar();
             }
 
-            return uint.Parse(stringBuffer);
+            if (uint.TryParse(stringBuffer, out uint result))
+            {
+                return result;
+            }
+            
+            return null;
         }
 
         public char PeekChar()
@@ -95,12 +105,7 @@ namespace WoWTools.SpellDescParser
                     return ReadExpression();
             }
 
-            int? spellID = null;
-
-            if (input.Length > cursor && char.IsDigit(PeekChar()))
-            {
-                spellID = ReadInt();
-            }
+            int? spellID = ReadInt();
 
             var type = PropertyType.Unknown;
 
@@ -132,21 +137,58 @@ namespace WoWTools.SpellDescParser
                 switch (multipleCharacterVariable)
                 {
                     case "@spellname":
+                    case "@spellnamme":
+                    case "@spelnamme":
+                    case "spellname":
                         type = PropertyType.SpellName;
-                        if (char.IsDigit(PeekChar()))
-                        {
-                            spellID = ReadInt();
-                        }
+                        spellID = ReadInt();
                         break;
                     case "@spelldesc":
+                    case "@@spelldesc":
+                    case "@spellDesc":
+                    case "@Spelldesc":
+                    case "@speldesc":
+                    case "@seplldesc":
+                    case "@spelldec":
+                    case "@spellesc":
+                    case "@pelldesc":
+                    case "spelldesc@":
+                    case "spellesc":
+                    case "spelldesc":
                         type = PropertyType.SpellDescription;
-                        if (char.IsDigit(PeekChar()))
-                        {
-                            spellID = ReadInt();
-                        }
+                        spellID = ReadInt();
+                        break;
+                    case "@spellicon":
+                        type = PropertyType.SpellIcon;
+                        spellID = ReadInt();
+                        break;
+                    case "@spelltooltip":
+                        type = PropertyType.SpellTooltip;
+                        spellID = ReadInt();
+                        break;
+                    case "@lootspec":
+                        type = PropertyType.LootSpec;
+                        break;
+                    case "@spellid":
+                    case "@spellaura":
+                    case "@garrabdesc":
+                    case "@garrbuilding":
+                    case "?a":
+                    case "?A":
+                    case "?c":
+                    case "?C":
+                    case "?l":
+                    case "?s":
+                    case "?S":
+                    case ":q":
+                    case "ecix":
+                    case "ec":
+                    case "sw":
+                    case "pri":
+                        type = PropertyType.Unknown;
                         break;
                     default:
-                        Console.WriteLine("Unhandled multichar variable identifier: " + variableIdentifier);
+                        Console.WriteLine("Unhandled multichar variable identifier: " + multipleCharacterVariable);
                         break;
                 }
 
@@ -247,12 +289,7 @@ namespace WoWTools.SpellDescParser
                     break;
             }
 
-            uint? index = null;
-
-            if (input.Length > cursor && char.IsDigit(PeekChar()))
-            {
-                index = ReadUInt();
-            }
+            uint? index = ReadUInt();
 
             // TODO: How are new lines handled???
             if (type == PropertyType.Unknown)
@@ -260,7 +297,7 @@ namespace WoWTools.SpellDescParser
 
             return new Property(type, index, spellID);
         }
-
+      
         public Expression ReadExpression()
         {
             // Skip over {
