@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
     <LangVersion>latest</LangVersion>
+    <UserSecretsId>c57aaf2b-e9c7-43b0-96ab-a81055d4a977</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

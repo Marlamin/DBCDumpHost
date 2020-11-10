@@ -181,8 +181,8 @@ namespace WoWTools.SpellDescParser
                     case "?s":
                     case "?S":
                     case ":q":
-                    case "ecix":
-                    case "ec":
+                    case "ecix": // Max enchanting item level
+                    case "ec": // Enchanting
                     case "sw":
                     case "pri":
                         type = PropertyType.Unknown;
