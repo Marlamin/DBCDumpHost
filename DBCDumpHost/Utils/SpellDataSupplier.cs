@@ -1,7 +1,6 @@
 ﻿using DBCD;
 using DBCDumpHost.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using WoWTools.SpellDescParser;
 
@@ -49,15 +48,21 @@ namespace DBCDumpHost.Utils
         public double? SupplyEffectPoint(int spellID, uint? effectIndex)
         {
             var spellEffect = SupplyEffectRow(spellID, effectIndex);
-
             if (spellEffect == null)
                 return null;
 
             var effectPoints = (float)spellEffect["EffectBasePointsF"];
 
-            if ((float)spellEffect["Coefficient"] == 0.0f)
+            var spellMiscEntry = dbcManager.FindRecords("SpellMisc", build, "SpellID", spellID, true).Result;
+            var spellAttributes = spellMiscEntry.Count == 0 ? new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} : spellMiscEntry[0].FieldAs<int[]>("Attributes");
+
+            if ((float)spellEffect["Coefficient"] != 0.0f)
             {
                 // TODO: Not yet implemented
+                var spellScalingEntry = dbcManager.FindRecords("SpellScaling", build, "SpellID", spellID, true).Result;
+                if (spellScalingEntry == null)
+                    return 0.0f;
+
                 return effectPoints;
             }
             else
@@ -71,11 +76,14 @@ namespace DBCDumpHost.Utils
                     TooltipUtils.GetExpectedStatTypeBySpellEffect((int)spellEffect["Effect"], (short)spellEffect["EffectAura"], miscValue[0]);
                 if (expectedStatType != TooltipUtils.ExpectedStatType.None)
                 {
-                    
-                }
-            }
+                    if ((spellAttributes[0] & 0x80000) == 0x80000)
+                        expectedStatType = TooltipUtils.ExpectedStatType.CreatureAutoAttackDps;
 
-            return effectPoints;
+
+                }
+
+                return effectPoints;
+            }
         }
 
         public int? SupplyEffectAmplitude(int spellID, uint? effectIndex)

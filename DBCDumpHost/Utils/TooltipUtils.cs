@@ -1,7 +1,6 @@
 ﻿using DBCDumpHost.Controllers;
 using DBCDumpHost.Services;
 using System;
-using System.Diagnostics;
 
 namespace DBCDumpHost.Utils
 {
@@ -106,7 +105,10 @@ namespace DBCDumpHost.Utils
 
         public enum ExpectedStatType : byte
         {
+            CreatureHealth = 0,
             PlayerHealth = 1,
+            CreatureAutoAttackDps = 2,
+            CreatureArmor = 3,
             PlayerMana = 4,
             PlayerPrimaryStat = 5,
             PlayerSecondaryStat = 6, 
