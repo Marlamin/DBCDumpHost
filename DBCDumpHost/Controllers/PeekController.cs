@@ -35,11 +35,37 @@ namespace DBCDumpHost.Controllers
 
         // GET: peek/name
         [HttpGet("{name}")]
-        public async Task<PeekResult> Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true)
+        public async Task<PeekResult> Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true, string pushIDs = "")
         {
             Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
 
-            var storage = await dbcManager.GetOrLoad(name, build, useHotfixes);
+            List<int> pushIDList = null;
+
+
+            if (useHotfixes && pushIDs != "")
+            {
+                pushIDList = new List<int>();
+
+                var pushIDsExploded = pushIDs.Split(',');
+
+                if (pushIDsExploded.Length > 0)
+                {
+                    foreach (var pushID in pushIDs.Split(','))
+                    {
+                        if (int.TryParse(pushID, out int pushIDInt))
+                        {
+                            pushIDList.Add(pushIDInt);
+                        }
+                    }
+
+                    if (pushIDList.Count > 0)
+                    {
+                        Logger.WriteLine("Applying pushid filter: " + pushIDs);
+                    }
+                }
+            }
+
+            var storage = await dbcManager.GetOrLoad(name, build, useHotfixes, LocaleFlags.All_WoW, pushIDList);
 
             var result = new PeekResult();
             result.values = new Dictionary<string, string>();

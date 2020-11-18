@@ -54,7 +54,7 @@ namespace DBCDumpHost.Utils
             var effectPoints = (float)spellEffect["EffectBasePointsF"];
 
             var spellMiscEntry = dbcManager.FindRecords("SpellMisc", build, "SpellID", spellID, true).Result;
-            var spellAttributes = spellMiscEntry.Count == 0 ? new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} : spellMiscEntry[0].FieldAs<int[]>("Attributes");
+            var spellAttributes = spellMiscEntry.Count == 0 ? new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } : spellMiscEntry[0].FieldAs<int[]>("Attributes");
 
             if ((float)spellEffect["Coefficient"] != 0.0f)
             {
@@ -239,10 +239,17 @@ namespace DBCDumpHost.Utils
             {
                 var rangeMin = rangeRow.FieldAs<float[]>("RangeMin");
 
-                if ((int) rangeMin[0] == 0)
-                    return SupplyMaxRange(spellID);
+                if ((int)rangeMin[0] != 0)
+                {
+                    return (int)rangeMin[0];
+                }
 
-                return (int)rangeMin[0];
+                var rangeMax = rangeRow.FieldAs<float[]>("RangeMax");
+
+                if ((int)rangeMax[0] != 0)
+                {
+                    return (int)rangeMax[0];
+                }
             }
 
             return null;
@@ -263,16 +270,23 @@ namespace DBCDumpHost.Utils
                 Console.WriteLine("Unable to find range for Spell ID " + spellID);
                 return null;
             }
-            
+
             var spellRangeDB = dbcManager.GetOrLoad("SpellRange", build).Result;
             if (spellRangeDB.TryGetValue(spellRangeID, out var rangeRow))
             {
                 var rangeMax = rangeRow.FieldAs<float[]>("RangeMax");
 
-                if ((int)rangeMax[0] == 0)
-                    return SupplyMinRange(spellID);
+                if ((int)rangeMax[0] != 0)
+                {
+                    return (int)rangeMax[0];
+                }
 
-                return (int)rangeMax[0];
+                var rangeMin = rangeRow.FieldAs<float[]>("RangeMin");
+
+                if ((int)rangeMin[0] != 0)
+                {
+                    return (int)rangeMin[0];
+                }
             }
 
             return null;

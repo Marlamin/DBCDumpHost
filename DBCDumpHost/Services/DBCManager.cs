@@ -31,39 +31,44 @@ namespace DBCDumpHost.Services
             return await GetOrLoad(name, build, false);
         }
 
-        public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
+        public async Task<IDBCDStorage> GetOrLoad(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW, List<int> pushIDFilter = null)
         {
             if (locale != LocaleFlags.All_WoW)
             {
                 return LoadDBC(name, build, useHotfixes, locale);
             }
 
-            if (!Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC))
+            if (pushIDFilter != null)
             {
-                SemaphoreSlim mylock = Locks.GetOrAdd((name, build, useHotfixes), k => new SemaphoreSlim(1, 1));
+                return LoadDBC(name, build, useHotfixes, locale, pushIDFilter);
+            }
 
-                await mylock.WaitAsync();
+            if (Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC)) 
+                return cachedDBC;
 
-                try
+            SemaphoreSlim mylock = Locks.GetOrAdd((name, build, useHotfixes), k => new SemaphoreSlim(1, 1));
+
+            await mylock.WaitAsync();
+
+            try
+            {
+                if (!Cache.TryGetValue((name, build, useHotfixes), out cachedDBC))
                 {
-                    if (!Cache.TryGetValue((name, build, useHotfixes), out cachedDBC))
-                    {
-                        // Key not in cache, load DBC
-                        Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
-                        cachedDBC = LoadDBC(name, build, useHotfixes);
-                        Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
-                    }
+                    // Key not in cache, load DBC
+                    Logger.WriteLine("DBC " + name + " for build " + build + " (hotfixes: " + useHotfixes + ") is not cached, loading!");
+                    cachedDBC = LoadDBC(name, build, useHotfixes);
+                    Cache.Set((name, build, useHotfixes), cachedDBC, new MemoryCacheEntryOptions().SetSize(1));
                 }
-                finally
-                {
-                    mylock.Release();
-                }
+            }
+            finally
+            {
+                mylock.Release();
             }
 
             return cachedDBC;
         }
 
-        private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
+        private IDBCDStorage LoadDBC(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW, List<int> pushIDFilter = null)
         {
             var dbcProvider = new DBCProvider();
             if (locale != LocaleFlags.All_WoW)
@@ -85,14 +90,14 @@ namespace DBCDumpHost.Services
 
             var buildNumber = uint.Parse(splitBuild[3]);
 
-            if (useHotfixes)
-            {
-                if (!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
-                    HotfixManager.LoadCaches(buildNumber);
+            if (!useHotfixes) 
+                return storage;
 
-                if (HotfixManager.hotfixReaders.ContainsKey(buildNumber))
-                    storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
-            }
+            if (!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                HotfixManager.LoadCaches(buildNumber);
+
+            if (HotfixManager.hotfixReaders.ContainsKey(buildNumber))
+                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
 
             return storage;
         }
@@ -117,12 +122,10 @@ namespace DBCDumpHost.Services
             var storage = await GetOrLoad(name, build);
             if (col == "ID")
             {
-                if (storage.TryGetValue(val, out DBCDRow row))
+                if (storage.TryGetValue(val, out var row))
                 {
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    foreach (var fieldName in storage.AvailableColumns)
                     {
-                        string fieldName = storage.AvailableColumns[i];
-
                         if (fieldName != col)
                             continue;
 
@@ -138,12 +141,10 @@ namespace DBCDumpHost.Services
             }
             else
             {
-                foreach (DBCDRow row in storage.Values)
+                foreach (var row in storage.Values)
                 {
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    foreach (var fieldName in storage.AvailableColumns)
                     {
-                        string fieldName = storage.AvailableColumns[i];
-
                         if (fieldName != col)
                             continue;
 

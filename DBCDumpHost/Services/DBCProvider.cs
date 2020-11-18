@@ -18,35 +18,38 @@ namespace DBCDumpHost.Services
             if (string.IsNullOrEmpty(build))
                 throw new Exception("No build given!");
 
-            var ms = new MemoryStream();
-            // Try CASC webservice
-            try
+            if (short.Parse(build[0].ToString()) > 5)
             {
-                using (var client = new HttpClient())
+                var ms = new MemoryStream();
+                // Try CASC webservice
+                try
                 {
-                    var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName="+ tableName + "&fullBuild=" + build + "&locale=" + localeFlags).Result;
-                    output.CopyTo(ms);
-                    ms.Position = 0;
-                    return ms;
+                    using (var client = new HttpClient())
+                    {
+                        var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName=" + tableName + "&fullBuild=" + build + "&locale=" + localeFlags).Result;
+                        output.CopyTo(ms);
+                        ms.Position = 0;
+                        return ms;
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Unable to retrieve DB2 from web CASC backend: " + e.Message);
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unable to retrieve DB2 from web CASC backend: " + e.Message);
+                }
             }
 
             // Fall back to finding an on-disk version
             string fileName = Path.Combine(SettingManager.dbcDir, build, "dbfilesclient", $"{tableName}.db2");
 
             // if the db2 variant doesn't exist try dbc
-            if (!File.Exists(fileName))
-            {
-                fileName = Path.ChangeExtension(fileName, ".dbc");
+            if (File.Exists(fileName))
+                return new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-                // if the dbc variant doesn't exist throw
-                if (!File.Exists(fileName))
-                    throw new FileNotFoundException($"Unable to find {tableName}");
-            }
+            fileName = Path.ChangeExtension(fileName, ".dbc");
+
+            // if the dbc variant doesn't exist throw
+            if (!File.Exists(fileName))
+                throw new FileNotFoundException($"Unable to find {tableName}");
 
             return new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
