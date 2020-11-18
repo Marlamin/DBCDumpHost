@@ -85,6 +85,12 @@ namespace DBCDumpHost.Controllers
         [Route("uploadzip")]
         public async Task<IActionResult> UploadZip(List<IFormFile> files)
         {
+            if (!Request.Headers.ContainsKey("WT-BuildInfo"))
+            {
+                Logger.WriteLine("No build info given!");
+                return BadRequest();
+            }
+
             if (!Request.Headers.ContainsKey("WT-UserToken"))
             {
                 Logger.WriteLine("No user token given!");
@@ -110,9 +116,11 @@ namespace DBCDumpHost.Controllers
 
                     var filePath = Path.GetTempFileName();
 
+                    using (var fs = new FileStream(Path.Combine("zips", userID + "-" + ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds() + "-" + DateTime.Now.Millisecond + ".zip"), FileMode.CreateNew))
                     using (var stream = new MemoryStream())
                     {
                         await formFile.CopyToAsync(stream);
+                        await formFile.CopyToAsync(fs);
 
                         foreach (var file in new ZipArchive(stream).Entries)
                         {
@@ -169,7 +177,7 @@ namespace DBCDumpHost.Controllers
                 }
 
                 var version = bin.ReadUInt32();
-                if (version > 7)
+                if (version != 7)
                 {
                     Logger.WriteLine("Unsupported DBCache version: " + version);
                     return;
