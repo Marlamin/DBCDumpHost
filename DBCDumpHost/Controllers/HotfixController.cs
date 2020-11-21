@@ -85,12 +85,6 @@ namespace DBCDumpHost.Controllers
         [Route("uploadzip")]
         public async Task<IActionResult> UploadZip(List<IFormFile> files)
         {
-            if (!Request.Headers.ContainsKey("WT-BuildInfo"))
-            {
-                Logger.WriteLine("No build info given!");
-                return BadRequest();
-            }
-
             if (!Request.Headers.ContainsKey("WT-UserToken"))
             {
                 Logger.WriteLine("No user token given!");
