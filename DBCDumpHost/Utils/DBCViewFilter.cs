@@ -122,7 +122,7 @@ namespace DBCDumpHost.Utils
 
                     // cast to string and apply any custom string formatting i.e. HtmlEncode and StringToCSVCell
                     var formattedProperty = Expression.Call(property, ObjectToString);
-                    if (StringFormatter != null && field.GetType() == typeof(string))
+                    if (StringFormatter != null && (field.GetType() == typeof(string) || field.GetType() == typeof(string[])))
                     {
                         formattedProperty = Expression.Call(StringFormatter.Method, formattedProperty);
                     }
