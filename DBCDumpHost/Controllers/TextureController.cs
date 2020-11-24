@@ -85,8 +85,6 @@ namespace DBCDumpHost.Controllers
                             returnList[cdiEntry.ID.ToString()].Add((uint)cdiEntry.ParticleColorID);
                         }
                     }
-
-                    break;
                 }
             }
 
