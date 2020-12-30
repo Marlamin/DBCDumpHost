@@ -152,8 +152,8 @@ namespace DBCDumpHost.Controllers
         [Route("refresh")]
         public string Get()
         {
-            HotfixManager.LoadCaches();
-            return "Refreshed hotfixes!";
+            //HotfixManager.LoadCaches();
+            return "NOT SUPPORTED";
         }
 
         private void ProcessCache(MemoryStream stream, int userID)

@@ -3,6 +3,7 @@ using DBFileReaderLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace DBCDumpHost.Services
 {
@@ -12,27 +13,15 @@ namespace DBCDumpHost.Services
 
         public static Dictionary<uint, List<string>> GetHotfixDBsPerBuild(uint targetBuild = 0)
         {
+            Logger.WriteLine("Listing hotfixes for build " + targetBuild);
+            if(targetBuild == 0)
+                throw new Exception("Tried reloading hotfixes for invalid build " + targetBuild);
+
             var filesPerBuild = new Dictionary<uint, List<string>>();
 
-            foreach (var file in Directory.GetFiles("caches", "*.bin"))
+            if (!filesPerBuild.ContainsKey(targetBuild))
             {
-                using (var stream = File.OpenRead(file))
-                using (var bin = new BinaryReader(stream))
-                {
-                    bin.BaseStream.Position = 8;
-                    var build = bin.ReadUInt32();
-
-                    // If only requesting files for 1 build, skip others
-                    if (targetBuild != 0 && targetBuild != build)
-                        continue;
-
-                    if (!filesPerBuild.ContainsKey(build))
-                    {
-                        filesPerBuild.Add(build, new List<string>());
-                    }
-
-                    filesPerBuild[build].Add(file);
-                }
+                filesPerBuild.Add(targetBuild, Directory.GetFiles("caches", "DBCache-" + targetBuild + "-*.bin").ToList());
             }
 
             return filesPerBuild;
@@ -61,6 +50,19 @@ namespace DBCDumpHost.Services
             }
         }
 
+        public static void LoadCache(uint targetBuild, string file)
+        {
+            if (!hotfixReaders.ContainsKey(targetBuild))
+            {
+                LoadCaches(targetBuild);
+            }
+            else
+            {
+                Console.WriteLine("Adding " + file + " for " + targetBuild + " to loaded caches");
+                hotfixReaders[targetBuild].CombineCache(file);
+            }
+        }
+
         public static void AddCache(MemoryStream cache, uint build, int userID)
         {
             var filename = Path.Combine("caches", "DBCache-" + build + "-" + userID + "-" + ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds() + "-" + DateTime.Now.Millisecond + ".bin");
@@ -68,7 +70,8 @@ namespace DBCDumpHost.Services
             {
                 cache.CopyTo(stream);
             }
-            LoadCaches(build);
+
+            LoadCache(build, filename);
         }
     }
 }
