@@ -20,7 +20,7 @@ namespace DBCDumpHost.Controllers
             this.dbcManager = dbcManager as DBCManager;
         }
 
-        public struct PeekResult
+        public class PeekResult
         {
             public Dictionary<string, string> values { get; set; }
             public int offset { get; set; }

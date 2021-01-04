@@ -8,6 +8,8 @@ namespace DBCDumpHost.Services
 {
     public class DBCProvider : IDBCProvider
     {
+        private static readonly HttpClient Client = new HttpClient();
+
         public LocaleFlags localeFlags = LocaleFlags.All_WoW;
 
         public Stream StreamForTableName(string tableName, string build)
@@ -24,13 +26,10 @@ namespace DBCDumpHost.Services
                 // Try CASC webservice
                 try
                 {
-                    using (var client = new HttpClient())
-                    {
-                        var output = client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName=" + tableName + "&fullBuild=" + build + "&locale=" + localeFlags).Result;
-                        output.CopyTo(ms);
-                        ms.Position = 0;
-                        return ms;
-                    }
+                    var output = Client.GetStreamAsync(SettingManager.cascToolHost + "/casc/file/db2?tableName=" + tableName + "&fullBuild=" + build + "&locale=" + localeFlags).Result;
+                    output.CopyTo(ms);
+                    ms.Position = 0;
+                    return ms;
                 }
                 catch (Exception e)
                 {

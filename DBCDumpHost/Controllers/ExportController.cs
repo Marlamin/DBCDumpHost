@@ -30,9 +30,9 @@ namespace DBCDumpHost.Controllers
 
         private async Task<byte[]> GenerateCSVStream(IDBCDStorage storage, Parameters parameters, bool newLinesInStrings = true)
         {
-            if (storage.Count == 0 || storage.AvailableColumns.Length == 0)
+            if (storage.AvailableColumns.Length == 0)
             {
-                throw new Exception("No rows found!");
+                throw new Exception("No columns found!");
             }
 
             // NOTE: if newLinesInStrings is obsolete then use StringToCSVCell in ctor

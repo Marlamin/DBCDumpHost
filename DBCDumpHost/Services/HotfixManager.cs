@@ -44,6 +44,8 @@ namespace DBCDumpHost.Services
 
             foreach (var fileList in filesPerBuild)
             {
+                if (fileList.Value.Count == 0)
+                    continue;
                 hotfixReaders.Add(fileList.Key, new HotfixReader(fileList.Value[0]));
                 hotfixReaders[fileList.Key].CombineCaches(fileList.Value.ToArray());
                 Logger.WriteLine("Loaded " + fileList.Value.Count + " hotfix DBs for build " + fileList.Key + "!");

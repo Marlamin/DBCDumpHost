@@ -14,7 +14,7 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class HeaderController : ControllerBase
     {
-        public struct HeaderResult
+        public class HeaderResult
         {
             public List<string> headers { get; set; }
             public Dictionary<string, string> fks { get; set; }

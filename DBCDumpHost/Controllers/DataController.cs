@@ -15,7 +15,7 @@ namespace DBCDumpHost.Controllers
     [ApiController]
     public class DataController : ControllerBase
     {
-        public struct DataTablesResult
+        public class DataTablesResult
         {
             public int draw { get; set; }
             public int recordsFiltered { get; set; }
