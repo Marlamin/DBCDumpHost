@@ -35,12 +35,11 @@ namespace DBCDumpHost.Controllers
 
         // GET: peek/name
         [HttpGet("{name}")]
-        public async Task<PeekResult> Get(string name, string build, string col, int val, bool useHotfixes = false, bool calcOffset = true, string pushIDs = "")
+        public async Task<PeekResult> Get(string name, string build, string col, int val, bool useHotfixes = false, string pushIDs = "")
         {
-            Logger.WriteLine("Serving foreign key row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
+            Logger.WriteLine("Serving peek row for " + name + "::" + col + " (" + build + ", hotfixes: " + useHotfixes + ") value " + val);
 
             List<int> pushIDList = null;
-
 
             if (useHotfixes && pushIDs != "")
             {
@@ -57,110 +56,88 @@ namespace DBCDumpHost.Controllers
                             pushIDList.Add(pushIDInt);
                         }
                     }
-
-                    if (pushIDList.Count > 0)
-                    {
-                        Logger.WriteLine("Applying pushid filter: " + pushIDs);
-                    }
                 }
             }
 
             var storage = await dbcManager.GetOrLoad(name, build, useHotfixes, LocaleFlags.All_WoW, pushIDList);
 
-            var result = new PeekResult();
-            result.values = new Dictionary<string, string>();
+            var result = new PeekResult {values = new Dictionary<string, string>()};
 
             if (!storage.Values.Any())
             {
                 return result;
             }
 
-            var offset = 0;
-            var recordFound = false;
-
-            if (!calcOffset && col == "ID")
+            if (col == "ID" && storage.TryGetValue(val, out var rowByIndex))
             {
-                if (storage.TryGetValue(val, out DBCDRow row))
+                foreach (var fieldName in storage.AvailableColumns)
                 {
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    if (fieldName != col)
+                        continue;
+
+                    var field = rowByIndex[fieldName];
+
+                    // Don't think FKs to arrays are possible, so only check regular value
+                    if (field.ToString() != val.ToString()) continue;
+
+                    foreach (var subfieldName in storage.AvailableColumns)
                     {
-                        string fieldName = storage.AvailableColumns[i];
+                        var subfield = rowByIndex[subfieldName];
 
-                        if (fieldName != col)
-                            continue;
-
-                        var field = row[fieldName];
-
-                        // Don't think FKs to arrays are possible, so only check regular value
-                        if (field.ToString() == val.ToString())
+                        if (subfield is Array a)
                         {
-                            for (var j = 0; j < storage.AvailableColumns.Length; ++j)
+                            for (var k = 0; k < a.Length; k++)
                             {
-                                string subfieldName = storage.AvailableColumns[j];
-                                var subfield = row[subfieldName];
-
-                                if (subfield is Array a)
-                                {
-                                    for (var k = 0; k < a.Length; k++)
-                                    {
-                                        result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
-                                    }
-                                }
-                                else
-                                {
-                                    result.values.Add(subfieldName, subfield.ToString());
-                                }
+                                result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
                             }
+                        }
+                        else
+                        {
+                            result.values.Add(subfieldName, subfield.ToString());
                         }
                     }
                 }
             }
             else
             {
-                foreach (DBCDRow row in storage.Values)
+                var recordFound = false;
+
+                foreach (var row in storage.Values)
                 {
                     if (recordFound)
                         continue;
 
-                    offset++;
-
-                    for (var i = 0; i < storage.AvailableColumns.Length; ++i)
+                    foreach (var fieldName in storage.AvailableColumns)
                     {
-                        string fieldName = storage.AvailableColumns[i];
-
                         if (fieldName != col)
                             continue;
 
                         var field = row[fieldName];
 
                         // Don't think FKs to arrays are possible, so only check regular value
-                        if (field.ToString() == val.ToString())
-                        {
-                            for (var j = 0; j < storage.AvailableColumns.Length; ++j)
-                            {
-                                string subfieldName = storage.AvailableColumns[j];
-                                var subfield = row[subfieldName];
+                        if (field.ToString() != val.ToString()) continue;
 
-                                if (subfield is Array a)
+                        foreach (var subfieldName in storage.AvailableColumns)
+                        {
+                            var subfield = row[subfieldName];
+
+                            if (subfield is Array a)
+                            {
+                                for (var k = 0; k < a.Length; k++)
                                 {
-                                    for (var k = 0; k < a.Length; k++)
-                                    {
-                                        result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
-                                    }
-                                }
-                                else
-                                {
-                                    result.values.Add(subfieldName, subfield.ToString());
+                                    result.values.Add(subfieldName + "[" + k + "]", a.GetValue(k).ToString());
                                 }
                             }
-
-                            recordFound = true;
+                            else
+                            {
+                                result.values.Add(subfieldName, subfield.ToString());
+                            }
                         }
+
+                        recordFound = true;
                     }
                 }
             }
-
-            result.offset = offset;
 
             return result;
         }
