@@ -64,7 +64,7 @@ namespace DBCDumpHost.Controllers
         [HttpGet, HttpPost]
         public async Task<ActionResult> ExportCSV(string name, string build, bool useHotfixes = false, bool newLinesInStrings = true, LocaleFlags locale = LocaleFlags.All_WoW)
         {
-            Logger.WriteLine("Exporting DBC " + name + " for build " + build + " and locale " + locale);
+            Logger.WriteLine("Exporting DBC " + name + " as CSV for build " + build + " and locale " + locale);
 
             var parameters = DefaultParameters;
 
@@ -74,6 +74,11 @@ namespace DBCDumpHost.Controllers
             try
             {
                 var storage = await GetStorage(name, build, useHotfixes, locale);
+
+                if (storage.Count == 0)
+                {
+                    return NoContent();
+                }
 
                 return new FileContentResult(await GenerateCSVStream(storage, parameters, newLinesInStrings), "application/octet-stream")
                 {
