@@ -20,7 +20,23 @@ namespace DBCDumpHost.Services
             if (string.IsNullOrEmpty(build))
                 throw new Exception("No build given!");
 
-            if (short.Parse(build[0].ToString()) > 5)
+            var tryCASC = false;
+
+            var explodedBuild = build.Split('.');
+
+            // WoD+
+            if (short.Parse(explodedBuild[0]) > 5)
+                tryCASC = true;
+
+            // Classic
+            if (short.Parse(explodedBuild[0]) == 1 && short.Parse(explodedBuild[1]) > 12)
+                tryCASC = true;
+
+            // TBC Classic
+            if (short.Parse(explodedBuild[0]) == 2 && short.Parse(explodedBuild[1]) > 4)
+                tryCASC = true;
+
+            if (tryCASC)
             {
                 var ms = new MemoryStream();
                 // Try CASC webservice
