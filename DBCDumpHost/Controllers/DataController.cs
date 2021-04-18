@@ -109,6 +109,13 @@ namespace DBCDumpHost.Controllers
                     takeLength = result.recordsFiltered - start;
                 }
 
+                // Temp hackfix: If requested count is higher than the amount of filtered records an error occurs and all rows are returned crashing tabs for large DBs.
+                if(takeLength < 0)
+                {
+                    start = 0;
+                    takeLength = 0;
+                }
+
                 result.data = result.data.GetRange(start, takeLength);
             }
             catch (Exception e)
