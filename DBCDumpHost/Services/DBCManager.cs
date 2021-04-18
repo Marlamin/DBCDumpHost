@@ -2,6 +2,7 @@
 using DBCD.Providers;
 using DBCDumpHost.Controllers;
 using DBCDumpHost.Utils;
+using DBFileReaderLib;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Concurrent;
@@ -43,7 +44,7 @@ namespace DBCDumpHost.Services
                 return LoadDBC(name, build, useHotfixes, locale, pushIDFilter);
             }
 
-            if (Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC)) 
+            if (Cache.TryGetValue((name, build, useHotfixes), out IDBCDStorage cachedDBC))
                 return cachedDBC;
 
             SemaphoreSlim mylock = Locks.GetOrAdd((name, build, useHotfixes), k => new SemaphoreSlim(1, 1));
@@ -90,14 +91,34 @@ namespace DBCDumpHost.Services
 
             var buildNumber = uint.Parse(splitBuild[3]);
 
-            if (!useHotfixes) 
+            if (!useHotfixes)
                 return storage;
 
             if (!HotfixManager.hotfixReaders.ContainsKey(buildNumber))
                 HotfixManager.LoadCaches(buildNumber);
 
             if (HotfixManager.hotfixReaders.ContainsKey(buildNumber))
-                storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
+            {
+                storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
+
+                // DBCD PR #17 support
+                /*
+                if (pushIDFilter != null)
+                {
+                    storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], (row, shouldDelete) =>
+                    {
+                        if (!pushIDFilter.Contains(row.PushId))
+                            return RowOp.Ignore;
+
+                        return HotfixReader.DefaultProcessor(row, shouldDelete);
+                    });
+                }
+                else
+                {
+                    storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
+                }
+                */
+            }
 
             return storage;
         }
