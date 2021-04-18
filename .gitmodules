@@ -3,4 +3,4 @@
 	url = https://github.com/Marlamin/DBDiffer
 [submodule "DBCD"]
 	path = DBCD
-	url = https://github.com/wowdev/DBCD.git
+	url = https://github.com/Marlamin/DBCD.git
