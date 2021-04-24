@@ -99,10 +99,9 @@ namespace DBCDumpHost.Services
 
             if (HotfixManager.hotfixReaders.ContainsKey(buildNumber))
             {
-                storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
+                //storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
 
                 // DBCD PR #17 support
-                /*
                 if (pushIDFilter != null)
                 {
                     storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], (row, shouldDelete) =>
@@ -115,9 +114,9 @@ namespace DBCDumpHost.Services
                 }
                 else
                 {
-                    storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber], pushIDFilter);
+                    storage = storage.ApplyingHotfixes(HotfixManager.hotfixReaders[buildNumber]);
                 }
-                */
+
             }
 
             return storage;
