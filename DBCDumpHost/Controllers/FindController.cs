@@ -84,6 +84,14 @@ namespace DBCDumpHost.Controllers
             }
             else
             {
+                var arrIndex = 0;
+
+                if (col.Contains("["))
+                {
+                    arrIndex = int.Parse(col.Split("[")[1].Replace("]", string.Empty));
+                    col = col.Split("[")[0];
+                }
+
                 foreach (DBCDRow row in storage.Values)
                 {
                     for (var i = 0; i < storage.AvailableColumns.Length; ++i)
@@ -95,6 +103,11 @@ namespace DBCDumpHost.Controllers
 
                         var field = row[fieldName];
 
+                        if (field is Array arrayField)
+                        {
+                            field = arrayField.GetValue(arrIndex).ToString();
+                        }
+                    
                         // Don't think FKs to arrays are possible, so only check regular value
                         if (field.ToString() == val.ToString())
                         {
