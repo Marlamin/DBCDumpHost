@@ -293,13 +293,13 @@ namespace DBCDumpHost.Utils
         }
 
         public int? SupplyEffectMisc(int spellID)
-		{
-			var spellEffect = SupplyEffectRow(spellID, 0);
+        {
+            var spellEffect = SupplyEffectRow(spellID, 0);
             if (spellEffect == null)
                 return null;
 
-			return (int)spellEffect.FieldAs<int[]>("EffectMiscValue")[0];
-		}
+            return (int)spellEffect.FieldAs<int[]>("EffectMiscValue")[0];
+        }
 
         public string? SupplySpellName(int spellID)
         {
