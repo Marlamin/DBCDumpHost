@@ -17,7 +17,7 @@ namespace DBCDumpHost.Controllers
     {
         public string Name { get; set; }
         public int IconFileDataID { get; set; }
-        public byte ExpansionID { get; set; }
+        public int ExpansionID { get; set; }
         public byte ClassID { get; set; }
         public byte SubClassID { get; set; }
         public sbyte InventoryType { get; set; }
@@ -130,7 +130,14 @@ namespace DBCDumpHost.Controllers
                 {
                     result.Name = (string)itemSearchNameEntry["Display_lang"];
                     result.RequiredLevel = (sbyte)itemSearchNameEntry["RequiredLevel"];
-                    result.ExpansionID = (byte)itemSearchNameEntry["ExpansionID"];
+                    if (byte.Parse(build[0].ToString()) >= 9 && byte.Parse(build[2].ToString()) >= 1)
+                    {
+                        result.ExpansionID = (int)itemSearchNameEntry["ExpansionID"];
+                    }
+                    else
+                    {
+                        result.ExpansionID = (byte)itemSearchNameEntry["ExpansionID"];
+                    }
                     result.ItemLevel = (ushort)itemSearchNameEntry["ItemLevel"];
                     result.OverallQualityID = (byte)itemSearchNameEntry["OverallQualityID"];
                 }
@@ -144,7 +151,15 @@ namespace DBCDumpHost.Controllers
                 result.OverallQualityID = (byte)itemSparseEntry["OverallQualityID"];
                 result.Name = (string)itemSparseEntry["Display_lang"];
                 result.FlavorText = (string)itemSparseEntry["Description_lang"];
-                result.ExpansionID = (byte)itemSparseEntry["ExpansionID"];
+
+                if (byte.Parse(build[0].ToString()) >= 9 && byte.Parse(build[2].ToString()) >= 1)
+                {
+                    result.ExpansionID = (int)itemSparseEntry["ExpansionID"];
+                }
+                else
+                {
+                    result.ExpansionID = (byte)itemSparseEntry["ExpansionID"];
+                }
                 result.RequiredLevel = (sbyte)itemSparseEntry["RequiredLevel"];
 
                 var itemDelay = (ushort)itemSparseEntry["ItemDelay"] / 1000f;

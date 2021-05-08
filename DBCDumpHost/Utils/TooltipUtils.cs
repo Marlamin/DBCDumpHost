@@ -281,7 +281,7 @@ namespace DBCDumpHost.Utils
                 2 => "Good",
                 3 => "Superior",
                 4 => "Epic",
-                _ => throw new Exception("Unsupported quality: " + overallQualityID),
+                _ => "Good",
             };
 
             return (targetField, targetIndex);
