@@ -227,7 +227,7 @@ namespace DBCDumpHost.Utils
                 return null;
             }
 
-            var spellRangeID = (ushort)spellMiscRow[0]["DurationIndex"];
+            var spellRangeID = (ushort)spellMiscRow[0]["RangeIndex"];
             if (spellRangeID == 0)
             {
                 Console.WriteLine("Unable to find range for Spell ID " + spellID);
@@ -244,11 +244,9 @@ namespace DBCDumpHost.Utils
                     return (int)rangeMin[0];
                 }
 
-                var rangeMax = rangeRow.FieldAs<float[]>("RangeMax");
-
-                if ((int)rangeMax[0] != 0)
+                if ((int)rangeMin[1] != 0)
                 {
-                    return (int)rangeMax[0];
+                    return (int)rangeMin[1];
                 }
             }
 
@@ -264,7 +262,7 @@ namespace DBCDumpHost.Utils
                 return null;
             }
 
-            var spellRangeID = (ushort)spellMiscRow[0]["DurationIndex"];
+            var spellRangeID = (ushort)spellMiscRow[0]["RangeIndex"];
             if (spellRangeID == 0)
             {
                 Console.WriteLine("Unable to find range for Spell ID " + spellID);
@@ -281,11 +279,9 @@ namespace DBCDumpHost.Utils
                     return (int)rangeMax[0];
                 }
 
-                var rangeMin = rangeRow.FieldAs<float[]>("RangeMin");
-
-                if ((int)rangeMin[0] != 0)
+                if ((int)rangeMax[1] != 0)
                 {
-                    return (int)rangeMin[0];
+                    return (int)rangeMax[1];
                 }
             }
 
