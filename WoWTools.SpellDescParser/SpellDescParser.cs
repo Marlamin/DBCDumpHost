@@ -229,10 +229,10 @@ namespace WoWTools.SpellDescParser
                     type = PropertyType.ProcCharges;
                     break;
                 case 'r': // SpellRange::ID
-                    type = PropertyType.MinRange;
+                    type = PropertyType.MaxRange;
                     break;
                 case 'R': // SpellRange::ID
-                    type = PropertyType.MaxRange;
+                    type = PropertyType.MinRange;
                     break;
                 case 's': // Effect
                     type = PropertyType.Effect;
