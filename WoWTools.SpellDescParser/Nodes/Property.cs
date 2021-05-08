@@ -11,6 +11,7 @@ namespace WoWTools.SpellDescParser
         Duration,
         Radius0,                // SpellEffect.EffectRadiusIndex[0]
         Radius1,                // SpellEffect.EffectRadiusIndex[1]
+        EffectMisc,             // SpellEffect.EffectMisc[0]
         MaxStacks,              // SpellAuraOptions.CumulativeAura
         AuraPeriod,             // SpellEffect.AuraPeriod
         ProcCharges,            // SpellAuraOptions.ProcCharges
@@ -166,6 +167,10 @@ namespace WoWTools.SpellDescParser
                 case PropertyType.EffectAmplitude:
                     var effectAmplitude = supplier.SupplyEffectAmplitude(spellID, index);
                     output.Append(effectAmplitude == null ? "?" : effectAmplitude.ToString());
+                    break;
+                case PropertyType.EffectMisc:
+                    var effectMisc = supplier.SupplyEffectMisc(spellID);
+                    output.Append(effectMisc == null ? "?" : effectMisc.ToString());
                     break;
                 case PropertyType.SpellName:
                     var spellName = supplier.SupplySpellName(spellID);
