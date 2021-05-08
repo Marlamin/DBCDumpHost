@@ -228,6 +228,9 @@ namespace WoWTools.SpellDescParser
                 case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
                     type = PropertyType.ProcCharges;
                     break;
+                case 'q': // EffectMiscValue
+                    type = PropertyType.EffectMisc;
+                    break;
                 case 'r': // SpellRange::ID
                     type = PropertyType.MaxRange;
                     break;
@@ -265,7 +268,6 @@ namespace WoWTools.SpellDescParser
                 case 'o': // TODO: Investigate
                 case 'O': // TODO: Investigate
                 case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
-                case 'q': // TODO: Investigate, broken in only spell it is used: 39794
                 case 'S': // EffectPoints...2? TODO: Investigate
                 case 'w': // Another EffectBasePoints?? TODO: Investigate 118078
                 case 'y': // Not parsed in-game?

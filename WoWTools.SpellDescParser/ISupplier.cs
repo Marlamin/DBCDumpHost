@@ -15,6 +15,7 @@
         int? SupplyMinRange(int spellID);
         int? SupplyMaxRange(int spellID);
         int? SupplyEffectAmplitude(int spellID, uint? effectIndex);
+        int? SupplyEffectMisc(int spellID);
         string? SupplySpellName(int spellID);
     }
 }

@@ -288,6 +288,15 @@ namespace DBCDumpHost.Utils
             return null;
         }
 
+        public int? SupplyEffectMisc(int spellID)
+        {
+            var spellEffect = SupplyEffectRow(spellID, 0);
+            if (spellEffect == null)
+                return null;
+
+            return (int)spellEffect.FieldAs<int[]>("EffectMiscValue")[0];
+        }
+
         public string? SupplySpellName(int spellID)
         {
             var spellNameDB = dbcManager.GetOrLoad("SpellName", build).Result;
