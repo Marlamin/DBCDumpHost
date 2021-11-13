@@ -71,9 +71,8 @@ namespace DBCDumpHost.Controllers
 
         // TEMP -- Testing tooltips for incomplete item data
         [HttpGet("unkItems")]
-        public async Task<IActionResult> GetUnkItems()
+        public async Task<IActionResult> GetUnkItems(string build = "9.0.1.35522")
         {
-            var build = "9.0.1.35522";
             var itemDB = await dbcManager.GetOrLoad("Item", build);
             var itemSparseDB = await dbcManager.GetOrLoad("ItemSparse", build, true);
             var itemSearchNameDB = await dbcManager.GetOrLoad("ItemSearchName", build, true);
