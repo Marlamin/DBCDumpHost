@@ -318,5 +318,10 @@ namespace Tests
 
             return null;
         }
+
+        public int? SupplyEffectMisc(int spellID)
+        {
+            return null;
+        }
     }
 }
