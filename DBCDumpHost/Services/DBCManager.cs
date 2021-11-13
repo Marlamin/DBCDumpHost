@@ -23,7 +23,7 @@ namespace DBCDumpHost.Services
         {
             this.dbdProvider = dbdProvider as DBDProvider;
 
-            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 250 });
             Locks = new ConcurrentDictionary<(string, string, bool), SemaphoreSlim>();
         }
 
@@ -125,14 +125,14 @@ namespace DBCDumpHost.Services
         public void ClearCache()
         {
             Cache.Dispose();
-            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 250 });
         }
 
         public void ClearHotfixCache()
         {
             // TODO: Only clear hotfix caches? :(
             Cache.Dispose();
-            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 350 });
+            Cache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 250 });
         }
 
         public async Task<List<DBCDRow>> FindRecords(string name, string build, string col, int val, bool single = false)
