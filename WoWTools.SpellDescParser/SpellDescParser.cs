@@ -224,6 +224,10 @@ namespace WoWTools.SpellDescParser
                 case 'H': // Proc chance (SpellAuraOptions.ProcChance)
                     type = PropertyType.ProcChance;
                     break;
+                case 'm': // Effect?
+                case 'M': // Effect?
+                    type = PropertyType.Effect;
+                    break;
                 case 'n': // Proc charges (SpellAuraOptions.ProcCharges)
                 case 'N': // Proc charges (SpellAuraOptions.ProcCharges)
                     type = PropertyType.ProcCharges;
@@ -263,8 +267,6 @@ namespace WoWTools.SpellDescParser
                 case 'b': // % chance per combo point for spell 14161. Broken in all other spells.
                 case 'B': // See above.
                 case 'c': // TODO: Investigate
-                case 'm': // TODO: Investigate
-                case 'M': // TODO: Investigate
                 case 'o': // TODO: Investigate
                 case 'O': // TODO: Investigate
                 case 'p': // TODO: Investigate, appears to be 0 for some spells I checked rq
