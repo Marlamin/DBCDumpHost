@@ -76,7 +76,7 @@ namespace WoWTools.SpellDescParser
                     break;
                 case PropertyType.Duration:
                     // TODO: Proper time parsing?
-                    var duration = supplier.SupplyDuration(spellID, index);
+                    var duration = supplier.SupplyDuration(spellID);
                     if (duration == null)
                     {
                         output.Append("?");
@@ -169,7 +169,7 @@ namespace WoWTools.SpellDescParser
                     output.Append(effectAmplitude == null ? "?" : effectAmplitude.ToString());
                     break;
                 case PropertyType.EffectMisc:
-                    var effectMisc = supplier.SupplyEffectMisc(spellID);
+                    var effectMisc = supplier.SupplyEffectMisc(spellID, index);
                     output.Append(effectMisc == null ? "?" : effectMisc.ToString());
                     break;
                 case PropertyType.SpellName:
@@ -183,7 +183,7 @@ namespace WoWTools.SpellDescParser
                     output.Append("$@spelldesc" + spellID);
                     break;
                 case PropertyType.LootSpec:
-                    output.Append("<loot specialization>");
+                    output.Append("loot specialization");
                     break;
                 case PropertyType.Unknown:
                     output.Append("UNKNOWN");

@@ -3,7 +3,7 @@
     public interface ISupplier
     {
         double? SupplyEffectPoint(int spellID, uint? effectIndex);
-        int? SupplyDuration(int spellID, uint? effectIndex);
+        int? SupplyDuration(int spellID);
         double? SupplyRadius(int spellID, uint? effectIndex, int radiusIndex);
         int? SupplyMaxStacks(int spellID);
         int? SupplyAuraPeriod(int spellID, uint? effectIndex);
@@ -15,7 +15,7 @@
         int? SupplyMinRange(int spellID);
         int? SupplyMaxRange(int spellID);
         int? SupplyEffectAmplitude(int spellID, uint? effectIndex);
-        int? SupplyEffectMisc(int spellID);
+        int? SupplyEffectMisc(int spellID, uint? effectIndex);
         string? SupplySpellName(int spellID);
     }
 }
