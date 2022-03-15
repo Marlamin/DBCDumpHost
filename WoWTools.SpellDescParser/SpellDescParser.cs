@@ -173,14 +173,20 @@ namespace WoWTools.SpellDescParser
                     case "@spellaura":
                     case "@garrabdesc":
                     case "@garrbuilding":
+                    case "@runecarveability":   // Linked by ItemID to RuneforgeLegendaryAbility
                     case "?a":
                     case "?A":
                     case "?c":
                     case "?C":
+                    case "?diff":
+                    case "?DIFF":
                     case "?l":
+                    case "?pc": // PlayerCondition
                     case "?s":
                     case "?S":
                     case ":q":
+                    case "ctrmax":
+                    case "maxcast":
                     case "ecix": // Max enchanting item level
                     case "ec": // Enchanting
                     case "sw":
