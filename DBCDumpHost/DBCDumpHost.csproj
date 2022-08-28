@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="caches\**" />
+    <Content Remove="caches\**" />
+    <EmbeddedResource Remove="caches\**" />
+    <None Remove="caches\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

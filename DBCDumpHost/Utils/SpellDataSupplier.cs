@@ -140,11 +140,8 @@ namespace DBCDumpHost.Utils
             return (int)spellAuraOptions[0]["ProcCharges"];
         }
 
-        public int? SupplyDuration(int spellID, uint? effectIndex)
+        public int? SupplyDuration(int spellID)
         {
-            // How is effectIndex used here?
-            effectIndex ??= 1;
-
             var spellMiscRow = dbcManager.FindRecords("spellMisc", build, "SpellID", spellID, true).Result;
             if (spellMiscRow.Count == 0)
             {
@@ -155,7 +152,7 @@ namespace DBCDumpHost.Utils
             var spellDurationID = (ushort)spellMiscRow[0]["DurationIndex"];
             if (spellDurationID == 0)
             {
-                Console.WriteLine("Unable to find duration for Spell ID " + spellID + " index " + effectIndex);
+                Console.WriteLine("Unable to find duration for Spell ID " + spellID);
                 return null;
             }
 
@@ -165,7 +162,7 @@ namespace DBCDumpHost.Utils
                 return (int)durationRow["Duration"];
             }
 
-            Console.WriteLine("Unable to find duration for Spell ID " + spellID + " index " + effectIndex);
+            Console.WriteLine("Unable to find duration for Spell ID " + spellID);
             return null;
         }
 
@@ -288,9 +285,9 @@ namespace DBCDumpHost.Utils
             return null;
         }
 
-        public int? SupplyEffectMisc(int spellID)
+        public int? SupplyEffectMisc(int spellID, uint? effectIndex)
         {
-            var spellEffect = SupplyEffectRow(spellID, 0);
+            var spellEffect = SupplyEffectRow(spellID, effectIndex);
             if (spellEffect == null)
                 return null;
 

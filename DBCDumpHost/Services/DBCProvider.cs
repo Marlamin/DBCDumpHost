@@ -36,6 +36,10 @@ namespace DBCDumpHost.Services
             if (short.Parse(explodedBuild[0]) == 2 && short.Parse(explodedBuild[1]) > 4)
                 tryCASC = true;
 
+            // WotLK Classic
+            if (short.Parse(explodedBuild[0]) == 3 && short.Parse(explodedBuild[1]) > 3)
+                tryCASC = true;
+
             if (tryCASC)
             {
                 var ms = new MemoryStream();
