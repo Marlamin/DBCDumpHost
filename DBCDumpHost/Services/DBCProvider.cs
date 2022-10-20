@@ -40,6 +40,9 @@ namespace DBCDumpHost.Services
             if (short.Parse(explodedBuild[0]) == 3 && short.Parse(explodedBuild[1]) > 3)
                 tryCASC = true;
 
+            // DISABLE CASC BACKEND -- DBs should only come from local disk now.
+            // tryCASC = false;
+            
             if (tryCASC)
             {
                 var ms = new MemoryStream();
