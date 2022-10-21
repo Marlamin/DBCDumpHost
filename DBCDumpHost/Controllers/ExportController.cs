@@ -143,6 +143,60 @@ namespace DBCDumpHost.Controllers
             }
         }
 
+        [Route("db2")]
+        [HttpGet]
+        public async Task<ActionResult> GetDB2ByTableName(string tableName, string fullBuild)
+        {
+            var provider = new DBCProvider();
+            
+            Logger.WriteLine("Serving DB2 \"" + tableName + "\" for build " + fullBuild);
+
+            try
+            {
+                var extension = "";
+                
+                string fileName = Path.Combine(SettingManager.dbcDir, fullBuild, "dbfilesclient", $"{tableName}.db2");
+
+                if (System.IO.File.Exists(fileName))
+                {
+                    extension = "db2";
+                }
+                else
+                {
+                    fileName = Path.ChangeExtension(fileName, ".dbc");
+                    
+                    if (!System.IO.File.Exists(fileName))
+                        throw new FileNotFoundException($"Unable to find {tableName}");
+
+                    extension = "dbc";
+                }
+
+                using (var stream = provider.StreamForTableName(tableName, fullBuild))
+                using (var ms = new MemoryStream())
+                {
+                    await stream.CopyToAsync(ms);
+                    return new FileContentResult(ms.ToArray(), "application/octet-stream")
+                    {
+                        FileDownloadName = Path.GetFileName(tableName.ToLower() + "." + extension)
+                    };
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Logger.WriteLine("Table " + tableName + " not found for build " + fullBuild);
+                Console.ResetColor();
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Logger.WriteLine("Error " + e.Message + " occured when serving file " + tableName + " for build " + fullBuild);
+                Console.ResetColor();
+            }
+
+            return NotFound();
+        }
         private async Task<IDBCDStorage> GetStorage(string name, string build, bool useHotfixes = false, LocaleFlags locale = LocaleFlags.All_WoW)
         {
             return await dbcManager.GetOrLoad(name, build, useHotfixes, locale);
