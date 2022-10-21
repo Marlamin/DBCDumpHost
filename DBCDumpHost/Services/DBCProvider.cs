@@ -20,6 +20,8 @@ namespace DBCDumpHost.Services
             if (string.IsNullOrEmpty(build))
                 throw new Exception("No build given!");
 
+            tableName = tableName.ToLower();
+            
             var tryCASC = false;
 
             var explodedBuild = build.Split('.');
