@@ -68,7 +68,7 @@ namespace DBCDumpHost.Services
             if (definitionLookup.TryGetValue(tableName, out var lookup))
                 return new FileStream(lookup.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            throw new FileNotFoundException("Definition for " + tableName);
+            throw new FileNotFoundException("Definition for " + tableName + " not found!");
         }
 
         public bool TryGetDefinition(string tableName, out Structs.DBDefinition definition)
