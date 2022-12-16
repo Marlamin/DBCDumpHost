@@ -27,20 +27,20 @@ namespace DBCDumpHost.Services
             var explodedBuild = build.Split('.');
 
             // WoD+
-            if (short.Parse(explodedBuild[0]) > 5)
-                tryCASC = true;
+            //if (short.Parse(explodedBuild[0]) > 5)
+            //    tryCASC = true;
 
-            // Classic
-            if (short.Parse(explodedBuild[0]) == 1 && short.Parse(explodedBuild[1]) > 12)
-                tryCASC = true;
+            //// Classic
+            //if (short.Parse(explodedBuild[0]) == 1 && short.Parse(explodedBuild[1]) > 12)
+            //    tryCASC = true;
 
-            // TBC Classic
-            if (short.Parse(explodedBuild[0]) == 2 && short.Parse(explodedBuild[1]) > 4)
-                tryCASC = true;
+            //// TBC Classic
+            //if (short.Parse(explodedBuild[0]) == 2 && short.Parse(explodedBuild[1]) > 4)
+            //    tryCASC = true;
 
-            // WotLK Classic
-            if (short.Parse(explodedBuild[0]) == 3 && short.Parse(explodedBuild[1]) > 3)
-                tryCASC = true;
+            //// WotLK Classic
+            //if (short.Parse(explodedBuild[0]) == 3 && short.Parse(explodedBuild[1]) > 3)
+            //    tryCASC = true;
 
             // DISABLE CASC BACKEND -- DBs should only come from local disk now. Still fall back to CASC for other locales for now.
             if (localeFlags.HasFlag(LocaleFlags.All_WoW) || localeFlags.HasFlag(LocaleFlags.enUS))
