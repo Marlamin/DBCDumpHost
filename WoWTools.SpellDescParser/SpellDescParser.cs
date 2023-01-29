@@ -152,6 +152,8 @@ namespace WoWTools.SpellDescParser
                     case "@spelldec":
                     case "@spellesc":
                     case "@pelldesc":
+                    case "@spelldes":
+                    case "@spelldessc":
                     case "spelldesc@":
                     case "spellesc":
                     case "spelldesc":
