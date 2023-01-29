@@ -170,6 +170,9 @@ namespace WoWTools.SpellDescParser
                         type = PropertyType.LootSpec;
                         break;
                     case "@spellid":
+                    case "@spellrec":
+                    case "@spellcast":
+                    case "@spell":
                     case "@spellaura":
                     case "@garrabdesc":
                     case "@garrbuilding":
